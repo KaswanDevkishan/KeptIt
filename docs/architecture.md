@@ -115,6 +115,12 @@ Feature-specific components, styles, tests, and state should remain close to the
 
 Use email or another documented identifier plus a password hashed with a current adaptive algorithm such as Argon2id. Prefer secure, `HttpOnly`, `Secure`, appropriately scoped `SameSite` cookies for browser sessions. If cookies authenticate state-changing requests, add a deliberate CSRF defense. Rotate session identifiers on login and privilege changes, support server-side revocation or bounded session lifetimes, and rate-limit sensitive endpoints.
 
+Password recovery uses random opaque tokens delivered through a replaceable email boundary. Only
+SHA-256 token digests are stored. Tokens expire, are single-use, and supersede earlier unused tokens
+for the account. Confirmation changes the Argon2id password hash and revokes all active sessions in
+one database transaction. Development delivery uses an ignored file outbox and fragment-based
+frontend links; production must replace that backend and add distributed IP/account rate limits.
+
 Authentication only establishes who the caller is. Its implementation should remain separate from authorization policy.
 
 ## Authorization approach

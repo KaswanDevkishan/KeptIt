@@ -89,6 +89,9 @@ export function LoginPage() {
             {errors.password}
           </p>
         )}
+        <Link className="auth-form__recovery" to="/forgot-password">
+          Forgot password?
+        </Link>
         <button
           className="button button--primary auth-form__submit"
           disabled={isSubmitting || isLoading}

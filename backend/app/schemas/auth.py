@@ -26,6 +26,24 @@ class LoginRequest(BaseModel):
         return value.strip().lower() if isinstance(value, str) else value
 
 
+class PasswordResetRequest(BaseModel):
+    email: EmailStr
+
+    @field_validator("email", mode="before")
+    @classmethod
+    def normalize_email(cls, value: object) -> object:
+        return value.strip().lower() if isinstance(value, str) else value
+
+
+class PasswordResetConfirmRequest(BaseModel):
+    token: str = Field(min_length=1, max_length=512)
+    new_password: str = Field(min_length=MIN_PASSWORD_LENGTH, max_length=MAX_PASSWORD_LENGTH)
+
+
+class MessageResponse(BaseModel):
+    message: str
+
+
 class PublicUser(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 

@@ -71,6 +71,7 @@ generated/
 # Logs and runtime files
 *.log
 logs/
+.local/
 *.pid
 *.pid.lock
 *.seed

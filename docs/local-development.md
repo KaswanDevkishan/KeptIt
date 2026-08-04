@@ -78,6 +78,25 @@ To exercise the authentication flow manually:
 4. Log back in, then verify incorrect-password and duplicate-registration messages are generic and
    actionable.
 
+### Exercise password recovery locally
+
+The default `EMAIL_BACKEND=development_file` performs no network calls. To test recovery:
+
+1. Open `/forgot-password`, enter the registered account email, and submit. The page always shows
+   the same success message, including for unknown and inactive accounts.
+2. Open the newest JSON line in `backend/.local/password-reset-outbox.jsonl` and copy its
+   `reset_url`. This ignored file intentionally contains a live development-only reset link; do not
+   publish, commit, or use this backend in production.
+3. Open the link, choose a password of 12–1,024 characters, and submit. The fragment token is kept
+   only in component memory and removed from the visible URL immediately.
+4. Sign in with the new password. Confirm the old password and every pre-reset browser session no
+   longer work.
+
+Reset tokens expire after `PASSWORD_RESET_TOKEN_LIFETIME_SECONDS` (30 minutes by default), are
+single-use, and supersede earlier unused tokens. PostgreSQL stores only SHA-256 digests of the raw
+tokens. Apply revision `20260805_0002` with `uv run alembic upgrade head`; its downgrade target is
+the authentication revision `20260804_0001`.
+
 Automated frontend authentication tests mock the HTTP boundary and run with the normal frontend
 test command below; they do not require a running backend.
 
@@ -104,14 +123,17 @@ uv run alembic upgrade head
 ```
 
 Review every generated migration before applying it. The authentication revision creates only
-`users` and `user_sessions`.
+`users` and `user_sessions`. Password recovery adds only `password_reset_tokens` in the following
+revision.
 
 ## Authentication security follow-up
 
-Before public production launch, add rate limits for registration and login, abuse monitoring and
-an account-lockout policy, email verification, password reset, and scheduled deletion of expired or
-revoked sessions. Account deletion remains deliberately undefined. Revisit CSRF protection before
-supporting cross-site deployments or changing the cookie's SameSite policy.
+Before public production launch, add distributed IP/account-aware rate limits for registration,
+login, and password-reset requests; abuse monitoring and an account-lockout policy; email
+verification; scheduled deletion of expired, used reset tokens and expired/revoked sessions; and a
+real email-provider adapter with delivery monitoring. Account deletion remains deliberately
+undefined. Revisit CSRF protection before supporting cross-site deployments or changing the
+cookie's SameSite policy.
 
 ## Stop local services
 

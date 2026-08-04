@@ -281,6 +281,27 @@ h1 {
   min-height: 3.2rem;
   margin-top: 1.5rem;
 }
+.auth-form__recovery {
+  justify-self: end;
+  margin-top: 0.65rem;
+  color: var(--forest);
+  font-size: 0.88rem;
+  font-weight: 650;
+}
+.auth-success {
+  margin-top: 2rem;
+  padding: 1rem;
+  border-left: 4px solid var(--forest);
+  border-radius: 0.4rem;
+  background: #e7f0eb;
+  line-height: 1.6;
+}
+.auth-success p:first-child {
+  margin-top: 0;
+}
+.auth-success p:last-child {
+  margin-bottom: 0;
+}
 .auth-card__alternate {
   margin: 1.5rem 0 0;
   color: var(--muted);

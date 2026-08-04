@@ -33,6 +33,7 @@ function safeError(response: Response, value: unknown): ApiError {
     invalid_credentials: 'Email or password is incorrect.',
     validation_error: 'Please check the information you entered.',
     csrf_rejected: 'This request could not be verified. Please refresh and try again.',
+    invalid_password_reset: 'This password reset link is invalid or has expired.',
   }
 
   return new ApiError(
