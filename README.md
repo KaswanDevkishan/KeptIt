@@ -49,8 +49,8 @@ Examples include finding “the Japanese abandoned town video” or “the tofu 
 
 ```text
 keptit/
-├── backend/              # FastAPI application (planned)
-├── frontend/             # React application (planned)
+├── backend/              # FastAPI application
+├── frontend/             # React application
 ├── docs/
 │   ├── architecture.md
 │   ├── product-spec.md
@@ -60,7 +60,7 @@ keptit/
 └── README.md
 ```
 
-Application directories are intentionally not scaffolded yet.
+Phase 1 provides the application foundation, health check, database configuration, and a polished landing page. Product features begin in later phases.
 
 ## Development roadmap
 
@@ -86,7 +86,54 @@ Development begins with product and architecture decisions, followed by applicat
 
 ## Local development
 
-Coming soon. Setup commands will be added with the backend and frontend scaffolding in Phase 1.
+Prerequisites are Python 3.11+, [uv](https://docs.astral.sh/uv/), Node.js 20+, npm, and Docker Compose. Copy each safe example environment file before starting:
+
+```bash
+cp .env.example .env
+cp backend/.env.example backend/.env
+cp frontend/.env.example frontend/.env
+```
+
+Start the local PostgreSQL service:
+
+```bash
+docker compose up -d postgres
+```
+
+Install and start the backend:
+
+```bash
+cd backend
+uv sync --extra dev
+uv run alembic upgrade head
+uv run uvicorn app.main:app --reload
+```
+
+Install and start the frontend in a second terminal:
+
+```bash
+cd frontend
+npm install
+npm run dev
+```
+
+Run the complete baseline checks:
+
+```bash
+cd backend
+uv run pytest
+uv run ruff check .
+uv run ruff format --check .
+uv run mypy app tests
+
+cd ../frontend
+npm test
+npm run lint
+npm run format:check
+npm run build
+```
+
+Use `uv run ruff format .` and `npm run format` to apply backend and frontend formatting. See the [local development guide](docs/local-development.md) for configuration, URLs, migration workflow, and shutdown instructions.
 
 ## Deployment
 
@@ -97,4 +144,5 @@ Coming soon. The initial production target is Render or another suitable managed
 - [Product specification](docs/product-spec.md)
 - [Architecture](docs/architecture.md)
 - [Roadmap](docs/roadmap.md)
+- [Local development](docs/local-development.md)
 - [Coding-agent guidance](AGENTS.md)
