@@ -14,7 +14,3 @@ class Base(DeclarativeBase):
     """Base class for SQLAlchemy models."""
 
     metadata = MetaData(naming_convention=NAMING_CONVENTION)
-
-
-# Import models here so Alembic always sees their metadata.
-from app.models.user import User, UserSession  # noqa: E402, F401

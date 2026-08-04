@@ -64,6 +64,23 @@ npm run dev
 
 The frontend is available at <http://localhost:5173>. In development only, its footer displays the current API connection status.
 
+For real registration and login, PostgreSQL must be running and `uv run alembic upgrade head` must
+have applied the authentication migration. `VITE_API_BASE_URL` must match the backend origin (the
+local default is `http://localhost:8000`), while backend `CORS_ORIGINS` and trusted-origin settings
+must include the frontend origin (`http://localhost:5173` by default). Frontend API requests include
+browser credentials, but JavaScript never reads or persists the opaque HTTP-only session cookie.
+
+To exercise the authentication flow manually:
+
+1. Open `/register`, create an account, and confirm navigation to `/app`.
+2. Refresh `/app` and confirm the current-user check restores the authenticated view.
+3. Log out and confirm revisiting `/app` redirects to `/login`.
+4. Log back in, then verify incorrect-password and duplicate-registration messages are generic and
+   actionable.
+
+Automated frontend authentication tests mock the HTTP boundary and run with the normal frontend
+test command below; they do not require a running backend.
+
 Run frontend checks from `frontend/`:
 
 ```bash

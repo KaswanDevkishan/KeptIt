@@ -62,8 +62,9 @@ keptit/
 
 Phase 1 provides the application foundation, health check, database configuration, and a polished landing page. Product features begin in later phases.
 
-The backend authentication foundation provides registration, login, logout, and current-user APIs.
-Frontend authentication screens remain scheduled for the library-interface phase.
+The authentication foundation provides registration, login, logout, current-user APIs, and a
+responsive frontend flow with protected application routing. Discovery and library interfaces
+remain scheduled for a later phase.
 
 ## Development roadmap
 
@@ -119,6 +120,11 @@ cd frontend
 npm install
 npm run dev
 ```
+
+Real frontend authentication requires the backend and PostgreSQL to be running and the
+authentication migration to be applied. `frontend/.env`'s `VITE_API_BASE_URL` must point to the
+backend origin. The backend's CORS and trusted-origin configuration must allow the frontend origin.
+Sessions use a browser-managed HTTP-only cookie; frontend code never reads or stores its value.
 
 Run the complete baseline checks:
 
