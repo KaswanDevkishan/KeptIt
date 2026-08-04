@@ -6,10 +6,12 @@ from sqlalchemy.orm import Session
 from app.auth.sessions import find_valid_session
 from app.core.config import Settings, get_settings
 from app.db.session import get_db
+from app.email.delivery import PasswordResetEmailSender, get_email_sender
 from app.models.user import User, UserSession
 
 DbSession = Annotated[Session, Depends(get_db)]
 AppSettings = Annotated[Settings, Depends(get_settings)]
+EmailSender = Annotated[PasswordResetEmailSender, Depends(get_email_sender)]
 
 
 def unauthenticated() -> HTTPException:

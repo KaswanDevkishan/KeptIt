@@ -20,3 +20,15 @@ export const login = (credentials: Credentials) =>
 export const logout = () => api.post<void>('/api/v1/auth/logout')
 export const getCurrentUser = (signal?: AbortSignal) =>
   api.get<PublicUser>('/api/v1/users/me', signal)
+
+export interface MessageResponse {
+  message: string
+}
+
+export const requestPasswordReset = (email: string) =>
+  api.post<MessageResponse>('/api/v1/auth/password-reset/request', { email })
+export const confirmPasswordReset = (token: string, newPassword: string) =>
+  api.post<MessageResponse>('/api/v1/auth/password-reset/confirm', {
+    token,
+    new_password: newPassword,
+  })

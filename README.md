@@ -66,6 +66,13 @@ The authentication foundation provides registration, login, logout, current-user
 responsive frontend flow with protected application routing. Discovery and library interfaces
 remain scheduled for a later phase.
 
+Password recovery is available through `/forgot-password`. Reset links use short-lived,
+single-use opaque tokens; PostgreSQL stores only each token's SHA-256 digest. A successful reset
+changes the password without signing the user in and revokes every existing session for that
+account. Local development writes reset links to the ignored
+`backend/.local/password-reset-outbox.jsonl` file. Production still requires a real email provider
+and IP/account-aware rate limiting.
+
 ## Development roadmap
 
 Development begins with product and architecture decisions, followed by application scaffolding, authentication, the core Discovery experience, and safe metadata enrichment. AI enhancements follow only after the non-AI MVP is stable. Production hardening, accessibility, monitoring, backups, and deployment complete the portfolio release. See [docs/roadmap.md](docs/roadmap.md) for phased deliverables and completion criteria.
