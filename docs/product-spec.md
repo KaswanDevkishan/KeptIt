@@ -24,15 +24,15 @@ KeptIt becomes a person's dependable memory for the internet: one private place 
 
 > Never lose anything interesting on the internet again.
 
-The promise means KeptIt reliably remembers where an item came from and why the user cared about it. It does not promise permanent availability of third-party content.
+The promise means KeptIt reliably remembers where a Discovery came from and why the user cared about it. It does not promise permanent availability of third-party content.
 
 ## Main use cases
 
 - Save a Reel, video, post, article, recipe, repository, or general webpage.
-- Add a title, personal note, tags, or collections while saving or later.
+- Add a title, personal note, tags, or Spaces while saving or later.
 - Browse a personal library on desktop or mobile.
-- Find an item by keyword, platform, tag, collection, or archive status.
-- Correct an item's details, archive it without deleting it, or remove it permanently.
+- Find a Discovery by keyword, platform, tag, Space, or archive status.
+- Correct a Discovery's details, archive it without deleting it, or remove it permanently.
 - Recognize that an equivalent URL is already saved before creating a duplicate.
 
 ## MVP scope
@@ -46,14 +46,14 @@ The first working release includes:
 - Automatic detection for Instagram, YouTube and Shorts, TikTok, Reddit, X, GitHub, and generic webpages
 - Optional custom title
 - Optional personal note
-- Collections
+- Spaces
 - Tags
 - A saved-content library
 - Keyword search across supported stored text fields
 - Platform filters
-- Editing a saved item
-- Archiving and restoring a saved item
-- Deleting a saved item
+- Editing a Discovery
+- Archiving and restoring a Discovery
+- Deleting a Discovery
 - Duplicate-link detection within a user's library
 - A responsive, mobile-friendly interface
 
@@ -63,7 +63,7 @@ The first working release includes:
 - Embeddings, pgvector, AI summaries, or automatic AI tags
 - Downloading, mirroring, or redistributing video or other copyrighted media
 - Browser extensions, native mobile applications, or operating-system share targets
-- Social feeds, public profiles, shared libraries, or collaborative collections
+- Social feeds, public profiles, shared libraries, or collaborative Spaces
 - Offline copies of third-party pages
 - Comprehensive metadata extraction from every platform
 - Imports from every bookmark or platform provider
@@ -82,19 +82,19 @@ The first working release includes:
 1. An authenticated user enters a URL and may add a title and note.
 2. KeptIt validates and normalizes the URL, detects its platform, and checks the user's library for a duplicate.
 3. If unique, KeptIt saves the original URL plus normalized comparison data and user-authored fields.
-4. The saved item appears in the library; metadata enrichment may happen later and must not block the save.
+4. The Discovery appears in the library; metadata enrichment may happen later and must not block the save.
 
 ### Organize and rediscover
 
-1. The user assigns tags and one or more collections.
+1. The user assigns tags and one or more Spaces.
 2. The user browses or enters keywords and optional platform filters.
-3. KeptIt returns only items owned by that user and matching the active criteria.
+3. KeptIt returns only Discoveries owned by that user and matching the active criteria.
 4. The user opens the original URL on its source platform.
 
 ### Maintain the library
 
-1. The user opens an owned item.
-2. The user edits its title, note, collections, or tags; archives or restores it; or requests deletion.
+1. The user opens an owned Discovery.
+2. The user edits its title, note, Spaces, or tags; archives or restores it; or requests deletion.
 3. KeptIt validates the request, verifies ownership, persists it, and communicates success or a safe error.
 
 ## Functional requirements
@@ -103,26 +103,26 @@ The first working release includes:
 
 - The system shall register users with normalized, unique account identifiers and securely hashed passwords.
 - The system shall authenticate valid credentials, log users out, and protect authenticated routes.
-- The system shall scope every library, saved-item, collection, and tag operation to the authenticated owner.
+- The system shall scope every library, Discovery, Space, and tag operation to the authenticated owner.
 - Error responses shall not reveal sensitive account or resource information.
 
-### Saved items
+### Discoveries
 
 - The system shall accept only supported HTTP or HTTPS URLs that pass validation and network-safety rules.
 - The system shall preserve the user-submitted original URL for navigation and store a normalized representation for matching.
 - The system shall classify known platforms and fall back to `webpage` for other valid URLs.
 - The system shall support optional custom titles and personal notes with documented length limits.
-- The system shall allow owners to view, edit, archive, restore, and delete their items.
+- The system shall allow owners to view, edit, archive, restore, and delete their Discoveries.
 - Destructive deletion shall require an explicit user action and remove or anonymize dependent data according to the retention policy.
 
 ### Organization and discovery
 
-- The system shall let users create, rename, and delete their own collections and tags.
-- The system shall allow saved items to belong to multiple collections and have multiple tags.
+- The system shall let users create, rename, and delete their own Spaces and tags.
+- The system shall allow Discoveries to belong to multiple Spaces and have multiple tags.
 - The system shall provide paginated library results with stable ordering.
 - The system shall support case-insensitive keyword search over custom title, available source title, personal note, and tags.
-- The system shall filter results by platform and archive status; collection and tag filtering should be supported where practical.
-- The system shall detect normalized duplicate links per user and return the existing item or a clear conflict response.
+- The system shall filter results by platform and archive status; Space and tag filtering should be supported where practical.
+- The system shall detect normalized duplicate links per user and return the existing Discovery or a clear conflict response.
 
 ### Interface
 
@@ -147,7 +147,7 @@ The first working release includes:
 - The application shall collect the minimum account and product data needed.
 - Passwords shall never be stored or logged in plaintext.
 - Authentication tokens, notes, search queries, and personal metadata shall be excluded from logs.
-- Users shall be able to delete their saved items and account data, subject to a documented backup-retention window.
+- Users shall be able to delete their Discoveries and account data, subject to a documented backup-retention window.
 - Production traffic and data shall be encrypted in transit; managed storage encryption shall be enabled at rest.
 - Access to operational data shall follow least privilege and be auditable.
 - Future summaries, tags, and embeddings shall be treated as private derived user data, with AI-provider use disclosed before release.
@@ -172,7 +172,7 @@ The MVP is successful when:
 - AI summaries and automatic tag suggestions
 - Embeddings and PostgreSQL pgvector
 - Semantic and hybrid keyword/vector search
-- Natural-language “ask my library” retrieval grounded in owned items
+- Natural-language “ask my library” retrieval grounded in owned Discoveries
 - Browser extension and mobile share integration
 - Progressive Web App capabilities
 - Import and export
