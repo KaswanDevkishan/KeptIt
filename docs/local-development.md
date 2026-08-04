@@ -29,6 +29,17 @@ The API is available at <http://localhost:8000>, its development documentation a
 
 The health endpoint reports process health only and deliberately does not query PostgreSQL. This keeps it usable during startup and makes its test independent of a database. Database readiness can be checked separately with `docker compose ps`.
 
+Authentication uses a first-party opaque session cookie. The raw token is sent only in the
+`HttpOnly` cookie; PostgreSQL stores its SHA-256 digest. Local HTTP development sets
+`SESSION_COOKIE_SECURE=false`. Every production environment must use HTTPS and set
+`SESSION_COOKIE_SECURE=true`. Cookie name, SameSite policy, path, and duration are configurable
+through the corresponding `SESSION_*` settings in `backend/.env.example`.
+
+State-changing authentication requests reject untrusted browser origins. Production additionally
+requires an `Origin` header, and `CORS_ORIGINS` must contain only the deployed first-party frontend.
+This origin check is the initial CSRF control; a future cross-site client or broader cookie policy
+requires a reviewed synchronizer-token or signed double-submit design before deployment.
+
 Run backend checks from `backend/`:
 
 ```bash
@@ -68,14 +79,22 @@ Apply formatting with `npm run format`.
 
 Backend settings are loaded from `backend/.env` using Pydantic Settings. `CORS_ORIGINS` is a JSON array so origins remain an explicit allowlist. Frontend variables exposed to browser code must use Vite's `VITE_` prefix. The committed example files contain local-only placeholder credentials; do not put real credentials in them.
 
-When the first database model is introduced, create a migration from `backend/` with:
+Create future model migrations from `backend/` with:
 
 ```bash
 uv run alembic revision --autogenerate -m "describe schema change"
 uv run alembic upgrade head
 ```
 
-Review every generated migration before applying it. Phase 1 intentionally has no schema revision because it defines no models.
+Review every generated migration before applying it. The authentication revision creates only
+`users` and `user_sessions`.
+
+## Authentication security follow-up
+
+Before public production launch, add rate limits for registration and login, abuse monitoring and
+an account-lockout policy, email verification, password reset, and scheduled deletion of expired or
+revoked sessions. Account deletion remains deliberately undefined. Revisit CSRF protection before
+supporting cross-site deployments or changing the cookie's SameSite policy.
 
 ## Stop local services
 

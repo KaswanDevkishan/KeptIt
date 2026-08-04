@@ -62,6 +62,9 @@ keptit/
 
 Phase 1 provides the application foundation, health check, database configuration, and a polished landing page. Product features begin in later phases.
 
+The backend authentication foundation provides registration, login, logout, and current-user APIs.
+Frontend authentication screens remain scheduled for the library-interface phase.
+
 ## Development roadmap
 
 Development begins with product and architecture decisions, followed by application scaffolding, authentication, the core Discovery experience, and safe metadata enrichment. AI enhancements follow only after the non-AI MVP is stable. Production hardening, accessibility, monitoring, backups, and deployment complete the portfolio release. See [docs/roadmap.md](docs/roadmap.md) for phased deliverables and completion criteria.
