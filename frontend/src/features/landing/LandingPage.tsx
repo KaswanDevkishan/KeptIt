@@ -1,8 +1,11 @@
 import { Link } from 'react-router-dom'
 
 import { ApiStatus } from '../../components/ApiStatus'
+import { useAuth } from '../auth/AuthProvider'
 
 export function LandingPage() {
+  const { isAuthenticated, isLoading } = useAuth()
+  const accountPath = isAuthenticated ? '/app' : '/login'
   return (
     <div className="site-shell">
       <header className="site-header">
@@ -13,9 +16,9 @@ export function LandingPage() {
           <a className="text-link" href="#how-it-works">
             How it works
           </a>
-          <button className="button button--compact button--quiet" type="button">
-            Sign in
-          </button>
+          <Link className="button button--compact button--quiet" to={accountPath}>
+            {isAuthenticated ? 'Open app' : 'Sign in'}
+          </Link>
         </nav>
       </header>
 
@@ -28,12 +31,16 @@ export function LandingPage() {
             searchable place—along with the context that made them worth keeping.
           </p>
           <div className="hero__actions">
-            <button className="button button--primary" type="button">
-              Get started
-            </button>
-            <button className="button button--secondary" type="button">
-              Sign in
-            </button>
+            <Link
+              className="button button--primary"
+              to={isAuthenticated ? '/app' : '/register'}
+              aria-disabled={isLoading}
+            >
+              {isAuthenticated ? 'Open your library' : 'Get started'}
+            </Link>
+            <Link className="button button--secondary" to={accountPath} aria-disabled={isLoading}>
+              {isAuthenticated ? 'Go to app' : 'Sign in'}
+            </Link>
           </div>
         </section>
 

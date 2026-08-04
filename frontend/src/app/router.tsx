@@ -1,10 +1,23 @@
-import { createBrowserRouter } from 'react-router-dom'
+import { createBrowserRouter, Navigate, type RouteObject } from 'react-router-dom'
 
+import { AppPage } from '../features/auth/AppPage'
+import { LoginPage } from '../features/auth/LoginPage'
+import { ProtectedRoute } from '../features/auth/ProtectedRoute'
+import { RegisterPage } from '../features/auth/RegisterPage'
 import { LandingPage } from '../features/landing/LandingPage'
+import { AppRoot } from './AppRoot'
 
-export const router = createBrowserRouter([
+export const routes: RouteObject[] = [
   {
-    path: '/',
-    element: <LandingPage />,
+    element: <AppRoot />,
+    children: [
+      { path: '/', element: <LandingPage /> },
+      { path: '/register', element: <RegisterPage /> },
+      { path: '/login', element: <LoginPage /> },
+      { element: <ProtectedRoute />, children: [{ path: '/app', element: <AppPage /> }] },
+      { path: '*', element: <Navigate to="/" replace /> },
+    ],
   },
-])
+]
+
+export const router = createBrowserRouter(routes)
