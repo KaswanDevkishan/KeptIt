@@ -4,10 +4,8 @@ from fastapi.testclient import TestClient
 from app.core.config import get_settings
 from app.main import app
 
-client = TestClient(app)
 
-
-def test_health_check() -> None:
+def test_health_check(client: TestClient) -> None:
     response = client.get("/api/v1/health")
 
     assert response.status_code == 200
@@ -19,7 +17,7 @@ def test_health_check_does_not_require_database(monkeypatch: pytest.MonkeyPatch)
     get_settings.cache_clear()
 
     try:
-        response = client.get("/api/v1/health")
+        response = TestClient(app).get("/api/v1/health")
     finally:
         get_settings.cache_clear()
 
