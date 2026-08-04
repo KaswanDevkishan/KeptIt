@@ -1,0 +1,105 @@
+# Python bytecode and caches
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.pytype/
+.hypothesis/
+
+# Python environments and packaging
+.venv/
+venv/
+env/
+ENV/
+*.egg-info/
+.eggs/
+build/
+dist/
+pip-wheel-metadata/
+
+# Coverage and test reports
+.coverage
+.coverage.*
+coverage.xml
+htmlcov/
+.tox/
+.nox/
+junit.xml
+
+# Node dependencies and caches
+node_modules/
+.npm/
+.pnpm-store/
+.yarn/cache/
+.yarn/unplugged/
+.vite/
+*.tsbuildinfo
+
+# Frontend build and test output
+frontend/dist/
+frontend/build/
+frontend/coverage/
+storybook-static/
+
+# Environment and secret files (keep templates trackable)
+.env
+.env.*
+!.env.example
+!.env.*.example
+*.pem
+*.key
+*.p12
+*.pfx
+secrets/
+*.secret
+
+# Local databases
+*.db
+*.db-journal
+*.sqlite
+*.sqlite3
+*.sqlite3-journal
+
+# Generated and user uploads
+uploads/
+media/
+generated/
+
+# Logs and runtime files
+*.log
+logs/
+*.pid
+*.pid.lock
+*.seed
+
+# Temporary files
+tmp/
+temp/
+*.tmp
+*.temp
+*.swp
+*.swo
+*~
+
+# Operating systems
+.DS_Store
+.AppleDouble
+.LSOverride
+Thumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+
+# Editors and IDEs
+.idea/
+.vscode/
+*.code-workspace
+*.iml
+.fleet/
+
+# Deployment-provider local state
+.render/
+.vercel/
+.netlify/
+.wrangler/

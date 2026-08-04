@@ -1,0 +1,100 @@
+# KeptIt
+
+> Never lose anything interesting on the internet again.
+
+KeptIt is a personal internet memory application for saving and rediscovering useful, entertaining, or inspiring content. It keeps references to content from Instagram, YouTube, TikTok, Reddit, X, articles, recipes, GitHub, and the wider web without copying the underlying media.
+
+## The problem
+
+Interesting links are scattered across browser tabs, bookmarks, messages, and platform-specific save lists. Those systems are difficult to organize and even harder to search by the details a person actually remembers. Links become stale, context is lost, and useful discoveries disappear into separate services.
+
+## The proposed solution
+
+KeptIt provides one private, searchable library for original URLs and the context around them. A saved item can include permitted metadata, a custom title, a personal note, collections, and tags. The first release focuses on a reliable URL-saving workflow and keyword discovery; later releases can add summaries and semantic retrieval.
+
+## MVP features
+
+- User registration, login, and logout
+- Save an original URL with automatic platform detection
+- Optional custom titles and personal notes
+- Collections and tags
+- A responsive saved-content library
+- Keyword search and platform filters
+- Edit, archive, and delete saved items
+- Duplicate-link detection
+
+Semantic AI search is not part of the first MVP.
+
+## Future AI features
+
+- AI-assisted summaries and suggested tags
+- Embeddings stored with PostgreSQL and pgvector
+- Natural-language semantic and hybrid search
+- An “ask my library” experience grounded in a user's saved items
+
+Examples include finding “the Japanese abandoned town video” or “the tofu recipe I saved last month” without remembering an exact title.
+
+## Planned technology stack
+
+| Area | Technology |
+| --- | --- |
+| Frontend | React, Vite, TypeScript, React Router, CSS Modules or a similarly small styling system |
+| Backend | Python, FastAPI, SQLAlchemy, Alembic, Pydantic |
+| Database | PostgreSQL |
+| Testing | pytest, React Testing Library, Vitest |
+| Future search | Embeddings, pgvector, hybrid keyword and semantic search |
+| Deployment | Render or another suitable production platform |
+
+## Planned repository structure
+
+```text
+keptit/
+├── backend/              # FastAPI application (planned)
+├── frontend/             # React application (planned)
+├── docs/
+│   ├── architecture.md
+│   ├── product-spec.md
+│   └── roadmap.md
+├── .gitignore
+├── AGENTS.md
+└── README.md
+```
+
+Application directories are intentionally not scaffolded yet.
+
+## Development roadmap
+
+Development begins with product and architecture decisions, followed by application scaffolding, authentication, the core saved-item experience, and safe metadata enrichment. AI discovery follows only after the non-AI MVP is stable. Production hardening, accessibility, monitoring, backups, and deployment complete the portfolio release. See [docs/roadmap.md](docs/roadmap.md) for phased deliverables and completion criteria.
+
+## Privacy principles
+
+- Collect only data necessary to provide the service.
+- Keep each user's library private by default and enforce ownership on every resource operation.
+- Store passwords only as strong salted hashes; never log credentials, tokens, or sensitive personal data.
+- Give users clear controls to edit, archive, delete, and eventually export their data.
+- Define retention and deletion behavior before production launch.
+- Treat notes, search queries, summaries, tags, and embeddings as private user data.
+
+## Platform-compliance principles
+
+- Store original URLs, permitted metadata, user-authored content, and derived organizational data.
+- Do not download, reproduce, host, or redistribute copyrighted videos.
+- Prefer official APIs and documented embed or metadata mechanisms where available.
+- Respect platform terms, robots directives, rate limits, attribution requirements, and content removal.
+- Use conservative metadata fetching with strict network protections; a failed enrichment must never prevent saving a URL.
+- Link users back to the original publisher and platform.
+
+## Local development
+
+Coming soon. Setup commands will be added with the backend and frontend scaffolding in Phase 1.
+
+## Deployment
+
+Coming soon. The initial production target is Render or another suitable managed platform, with final infrastructure selected and documented before launch.
+
+## Project documentation
+
+- [Product specification](docs/product-spec.md)
+- [Architecture](docs/architecture.md)
+- [Roadmap](docs/roadmap.md)
+- [Coding-agent guidance](AGENTS.md)
