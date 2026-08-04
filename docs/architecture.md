@@ -20,7 +20,7 @@ The web and API processes should be independently deployable. Metadata work shou
 
 ## Frontend responsibilities
 
-- Render registration, login, library, saved-item, collection, tag, search, and filter experiences.
+- Render registration, login, library, Discovery, Space, tag, search, and filter experiences.
 - Manage navigation and protected-route presentation with React Router.
 - Validate inputs for immediate feedback while treating backend validation as authoritative.
 - Send credentials safely, handle authentication state, and avoid persisting sensitive tokens in browser storage.
@@ -31,16 +31,31 @@ The web and API processes should be independently deployable. Metadata work shou
 
 - Expose a versioned API with validated request and response schemas.
 - Register and authenticate users, manage sessions, and enforce authorization.
-- Normalize URLs, detect platforms, identify duplicates, and persist saved items.
-- Manage collections, tags, search, filters, pagination, archive state, and deletion.
+- Normalize URLs, detect platforms, identify duplicates, and persist Discoveries.
+- Manage Spaces, tags, search, filters, pagination, archive state, and deletion.
 - Coordinate safe metadata enrichment without making third-party availability part of the save transaction.
 - Produce structured logs and consistent errors without leaking sensitive information.
 
 ## Database responsibilities
 
-PostgreSQL is the source of truth for users, sessions or refresh-token state if applicable, saved items, collections, tags, and their relationships. It provides transactional integrity, ownership constraints, uniqueness guarantees, indexes for library queries, and later full-text/vector capabilities. Alembic owns all schema evolution.
+PostgreSQL is the source of truth for users, server-side sessions, Discoveries, Spaces, tags, and their relationships. It provides transactional integrity, ownership constraints, uniqueness guarantees, indexes for library queries, and later full-text/vector capabilities. Alembic owns all schema evolution.
 
-Likely entities include `users`, `saved_items`, `collections`, `tags`, `saved_item_collections`, and `saved_item_tags`. Ownership should be explicit on top-level user resources. A per-user unique constraint on the normalized URL fingerprint provides concurrency-safe duplicate protection.
+Initial entities are `users`, `user_sessions`, `discoveries`, `spaces`, `space_memberships`, `tags`, and `discovery_tags`. Ownership is explicit on top-level user resources. A per-user unique constraint on the canonical URL hash provides concurrency-safe duplicate protection.
+
+## Core data-model direction
+
+A **Discovery** is the core domain entity: one user's private memory of something found on the internet. A **Space** is a user-visible collection of Discoveries. Every Discovery, Space, and Tag has one owning User, and every read or mutation is scoped to that owner on the server.
+
+Discovery preserves the accepted original URL, a versioned canonical form, deterministic platform classification, and personal context such as custom title, note, save reason, importance, favourite state, and archive state. Externally fetched source facts—title, description, thumbnail, creator or publisher, and publication time—live in a separate Metadata Record when enrichment is introduced. Future inferred summaries, topics, connections, Memory Threads, and Insights remain separately versioned and must not overwrite user-authored context or masquerade as source facts.
+
+This separation lets the basic private library work without metadata providers or AI. It also provides an additive path toward the future Memory Engine: visits and feedback can describe memory behaviour; relational edges can connect Discoveries; and PostgreSQL-native vector records can later support semantic retrieval. These tables are introduced only with their product feature, privacy policy, and deletion behavior.
+
+Detailed decisions and schemas are documented in:
+
+- [Data model](data-model.md)
+- [Database decisions](database-decisions.md)
+- [Entity relationships](entity-relationship.md)
+- [MVP schema](mvp-schema.md)
 
 ## Proposed backend modules
 
@@ -72,8 +87,8 @@ frontend/src/
 ├── features/
 │   ├── auth/
 │   ├── library/
-│   ├── saved-items/
-│   ├── collections/
+│   ├── discoveries/
+│   ├── spaces/
 │   ├── tags/
 │   └── search/
 ├── components/          # Reusable presentation components
@@ -87,7 +102,7 @@ Feature-specific components, styles, tests, and state should remain close to the
 
 ## API request flow
 
-1. The browser sends an HTTPS request to a versioned endpoint such as `/api/v1/saved-items`.
+1. The browser sends an HTTPS request to a versioned endpoint such as `/api/v1/discoveries`.
 2. Middleware assigns a request ID, applies trusted-proxy and security policy, and records safe timing data.
 3. Authentication establishes the current identity; route dependencies reject unauthenticated access where required.
 4. Pydantic validates the request contract.
@@ -104,7 +119,7 @@ Authentication only establishes who the caller is. Its implementation should rem
 
 ## Authorization approach
 
-All private-resource queries and mutations must be scoped by the authenticated user's ID at the database access boundary. Services should verify ownership for saved items, collections, and tags, including relationship updates. Return non-enumerating not-found responses when appropriate. Frontend route guards improve user experience but are never an authorization control. Cross-user and insecure-direct-object-reference tests are required.
+All private-resource queries and mutations must be scoped by the authenticated user's ID at the database access boundary. Services should verify ownership for Discoveries, Spaces, and tags, including relationship updates. Return non-enumerating not-found responses when appropriate. Frontend route guards improve user experience but are never an authorization control. Cross-user and insecure-direct-object-reference tests are required.
 
 ## Metadata-processing approach
 
@@ -114,7 +129,7 @@ Generic fetching must allow only public HTTP(S) destinations, resolve and re-che
 
 ## Duplicate-link detection approach
 
-Duplicates are scoped to one user. Before insertion, compute a versioned canonical fingerprint from the normalized URL and query for an existing active or archived item. A database unique constraint on `(user_id, normalized_url_fingerprint)` is authoritative and handles concurrent saves. The API should return a conflict with the existing item's safe identifier rather than create a silent duplicate. Future product policy may allow an explicit duplicate override, but it is not assumed for MVP.
+Duplicates are scoped to one user. Before insertion, compute a versioned canonical URL and hash and query for an existing active or archived Discovery. A database unique constraint on `(user_id, canonical_url_hash)` is authoritative and handles concurrent saves. The API should return a conflict with the existing Discovery's safe identifier rather than create a silent duplicate. Future product policy may allow an explicit duplicate override, but it is not assumed for MVP.
 
 ## URL normalization approach
 
@@ -151,9 +166,9 @@ Tests should use isolated databases and deterministic provider fakes; they must 
 
 ## Future semantic-search architecture
 
-After the MVP is stable, a background pipeline can build a permitted text representation from titles, descriptions, notes, summaries, tags, and other approved fields. It chunks where useful, creates embeddings through a replaceable provider interface, and stores model/version metadata alongside vectors in PostgreSQL with pgvector. Updates and deletion enqueue re-indexing or vector removal.
+After the MVP is stable, a background pipeline can build a permitted text representation from Discovery titles, descriptions, notes, summaries, tags, and other approved fields. It chunks where useful, creates embeddings through a replaceable provider interface, and stores model/version metadata alongside vectors in PostgreSQL with pgvector. Updates and deletion enqueue re-indexing or vector removal.
 
-Search can combine PostgreSQL full-text ranking with vector similarity, apply user ownership and filters before returning results, and fuse rankings in the service layer. “Ask my library” responses must be grounded only in the authenticated user's retrieved items, link to sources, tolerate missing source content, and disclose AI processing. Derived data follows the same deletion and privacy rules as its source.
+Search can combine PostgreSQL full-text ranking with vector similarity, apply user ownership and filters before returning results, and fuse rankings in the service layer. “Ask my library” responses must be grounded only in the authenticated user's retrieved Discoveries, link to sources, tolerate missing source content, and disclose AI processing. Derived data follows the same deletion and privacy rules as its source.
 
 ## Security considerations
 

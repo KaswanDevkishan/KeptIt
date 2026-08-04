@@ -44,44 +44,65 @@ Each phase should remain deployable and reviewable. A phase is complete only whe
 
 **Deliverables:**
 
+- Initial database migration containing only the User and server-side User Session schema
+- User persistence model
 - User registration
 - Login and logout
-- Secure password hashing and session management
-- Protected API and frontend routes
+- Secure password hashing and revocable, opaque-cookie session management
+- Protected current-user API endpoint
 - Separate authentication and authorization foundations
+- Backend tests for registration, login, logout, session expiry/revocation, and protected access
 
 **Completion criteria:**
 
-- A user can register, log in, access a protected screen, and log out.
+- The reviewed Alembic migration creates only the authentication tables and can upgrade and downgrade in an isolated PostgreSQL test database.
+- A user can register, log in, call the protected current-user endpoint, and log out.
 - Invalid or expired sessions are rejected safely.
 - Passwords and tokens never appear in application logs or API responses.
-- Automated tests cover credential validation, session lifecycle, CSRF behavior where applicable, and protected-route access.
+- Backend tests cover credential validation, duplicate registration behavior, session lifecycle, CSRF behavior where applicable, and protected endpoint access.
+- No Discovery, Space, Tag, metadata, or frontend feature is implemented in this phase.
 
-## Phase 3 — Core saved-content MVP
+## Phase 3 — Discovery capture and organization
 
-**Goal:** Deliver the complete non-AI workflow for saving, organizing, and finding links.
+**Goal:** Establish the private non-AI core for preserving and organizing Discoveries.
 
 **Deliverables:**
 
+- Discovery, Space, membership, Tag, and Discovery Tag migrations and models
 - URL saving, validation, normalization, and duplicate detection
 - Automatic platform detection
-- Responsive saved-content library
+- Optional custom title, personal note, and save reason
 - Edit, archive, restore, and delete actions
-- Collections and tags
-- Keyword search, platform filtering, archive filtering, and pagination
+- Spaces and tags
 - Ownership enforcement across all resources
 
 **Completion criteria:**
 
-- All MVP user journeys work on defined mobile and desktop viewports.
 - Supported platform and representative generic URLs are detected and saved correctly.
 - Equivalent URLs produce a clear per-user duplicate conflict, including under concurrent requests.
+- Archive remains reversible, permanent deletion cascades dependent private data, and archived Discoveries still prevent duplicates.
+- Cross-user authorization and backend persistence/API tests pass for Discoveries, Spaces, and tags.
+
+## Phase 4 — Library retrieval and interface
+
+**Goal:** Make the Discovery library useful and accessible across supported web viewports.
+
+**Deliverables:**
+
+- Responsive Discovery library and detail/edit experiences
+- Keyword search, platform filtering, Space and tag filtering, archive filtering, and stable pagination
+- Favourite, archive, restore, and explicit delete interactions
+- Registration and login interface plus protected navigation
+
+**Completion criteria:**
+
+- Core authentication, saving, organization, search, edit, archive, and delete journeys work on defined mobile and desktop viewports.
 - Search and filters return stable, paginated, owner-scoped results.
-- Cross-user authorization and critical frontend/backend workflow tests pass.
+- Critical frontend/backend workflow and accessibility tests pass.
 
-## Phase 4 — Safe metadata enrichment
+## Phase 5 — Safe metadata enrichment
 
-**Goal:** Improve saved-item context without weakening reliability, privacy, or platform compliance.
+**Goal:** Improve Discovery source context without weakening reliability, privacy, or platform compliance.
 
 **Deliverables:**
 
@@ -94,22 +115,24 @@ Each phase should remain deployable and reviewable. A phase is complete only whe
 **Completion criteria:**
 
 - URL saving succeeds even when every metadata provider is unavailable.
-- Approved sources enrich representative items and attribution links remain intact.
+- Approved sources enrich representative Discoveries and attribution links remain intact.
 - Failure states are observable and understandable without exposing sensitive provider data.
 - Security tests cover private addresses, malicious redirects, unsafe content types, and oversized responses.
 - No copyrighted video is downloaded or hosted.
 
-## Phase 5 — AI-assisted discovery
+## Phase 6 — Memory behaviour and AI-assisted discovery
 
-**Goal:** Add private, grounded natural-language discovery after the MVP is stable.
+**Goal:** Add private memory behaviour and grounded intelligence after the non-AI product is stable.
 
 **Deliverables:**
 
 - AI summaries and automatic tag suggestions
+- Carefully scoped revisit history and rediscovery feedback
+- Discovery connections and Memory Threads backed by explainable relational records
 - Versioned embedding pipeline and pgvector storage
 - Semantic search
 - Hybrid keyword and semantic ranking
-- An “ask my library” experience grounded in owned saved items
+- An “ask my library” experience grounded in owned Discoveries
 
 **Completion criteria:**
 
@@ -119,7 +142,7 @@ Each phase should remain deployable and reviewable. A phase is complete only whe
 - Evaluation fixtures demonstrate useful gains over keyword-only search for agreed queries.
 - The product degrades safely when AI services are unavailable and never fabricates saved sources.
 
-## Phase 6 — Capture and portability
+## Phase 7 — Capture and portability
 
 **Goal:** Make KeptIt easier to use wherever links are discovered and keep user data portable.
 
@@ -137,7 +160,7 @@ Each phase should remain deployable and reviewable. A phase is complete only whe
 - Export produces a documented, portable format.
 - Imports are previewable, idempotent where practical, and report invalid or duplicate records without losing valid entries.
 
-## Phase 7 — Production and portfolio release
+## Phase 8 — Production and portfolio release
 
 **Goal:** Harden, operate, deploy, and clearly present a production-ready portfolio application.
 

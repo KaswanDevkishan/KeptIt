@@ -10,17 +10,17 @@ Interesting links are scattered across browser tabs, bookmarks, messages, and pl
 
 ## The proposed solution
 
-KeptIt provides one private, searchable library for original URLs and the context around them. A saved item can include permitted metadata, a custom title, a personal note, collections, and tags. The first release focuses on a reliable URL-saving workflow and keyword discovery; later releases can add summaries and semantic retrieval.
+KeptIt provides one private, searchable library for original URLs and the context around them. A Discovery can include permitted metadata, a custom title, a personal note, Spaces, and tags. The first release focuses on a reliable URL-saving workflow and keyword discovery; later releases can add summaries and semantic retrieval.
 
 ## MVP features
 
 - User registration, login, and logout
 - Save an original URL with automatic platform detection
 - Optional custom titles and personal notes
-- Collections and tags
+- Spaces and tags
 - A responsive saved-content library
 - Keyword search and platform filters
-- Edit, archive, and delete saved items
+- Edit, archive, and delete Discoveries
 - Duplicate-link detection
 
 Semantic AI search is not part of the first MVP.
@@ -30,7 +30,7 @@ Semantic AI search is not part of the first MVP.
 - AI-assisted summaries and suggested tags
 - Embeddings stored with PostgreSQL and pgvector
 - Natural-language semantic and hybrid search
-- An “ask my library” experience grounded in a user's saved items
+- An “ask my library” experience grounded in a user's Discoveries
 
 Examples include finding “the Japanese abandoned town video” or “the tofu recipe I saved last month” without remembering an exact title.
 
@@ -64,7 +64,7 @@ Phase 1 provides the application foundation, health check, database configuratio
 
 ## Development roadmap
 
-Development begins with product and architecture decisions, followed by application scaffolding, authentication, the core saved-item experience, and safe metadata enrichment. AI discovery follows only after the non-AI MVP is stable. Production hardening, accessibility, monitoring, backups, and deployment complete the portfolio release. See [docs/roadmap.md](docs/roadmap.md) for phased deliverables and completion criteria.
+Development begins with product and architecture decisions, followed by application scaffolding, authentication, the core Discovery experience, and safe metadata enrichment. AI enhancements follow only after the non-AI MVP is stable. Production hardening, accessibility, monitoring, backups, and deployment complete the portfolio release. See [docs/roadmap.md](docs/roadmap.md) for phased deliverables and completion criteria.
 
 ## Privacy principles
 
@@ -143,6 +143,10 @@ Coming soon. The initial production target is Render or another suitable managed
 
 - [Product specification](docs/product-spec.md)
 - [Architecture](docs/architecture.md)
+- [Data model](docs/data-model.md)
+- [Database decisions](docs/database-decisions.md)
+- [Entity relationships](docs/entity-relationship.md)
+- [MVP schema](docs/mvp-schema.md)
 - [Roadmap](docs/roadmap.md)
 - [Local development](docs/local-development.md)
 - [Coding-agent guidance](AGENTS.md)
