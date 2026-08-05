@@ -68,18 +68,18 @@ Each phase should remain deployable and reviewable. A phase is complete only whe
 - Backend tests cover credential validation, duplicate registration behavior, session lifecycle, CSRF behavior where applicable, and protected endpoint access.
 - No Discovery, Space, Tag, metadata, or frontend feature is implemented in this phase.
 
-## Phase 3 — Discovery capture and organization
+## Phase 3 — Discovery capture and Spaces organization
 
 **Goal:** Establish the private non-AI core for preserving and organizing Discoveries.
 
 **Deliverables:**
 
-- Discovery, Space, membership, Tag, and Discovery Tag migrations and models
+- Discovery, Space, and Space Membership migrations and models
 - URL saving, validation, normalization, and duplicate detection
 - Automatic platform detection
 - Optional custom title, personal note, and save reason
 - Edit, archive, restore, and delete actions
-- Spaces and tags
+- Spaces
 - Ownership enforcement across all resources
 
 **Completion criteria:**
@@ -87,7 +87,7 @@ Each phase should remain deployable and reviewable. A phase is complete only whe
 - Supported platform and representative generic URLs are detected and saved correctly.
 - Equivalent URLs produce a clear per-user duplicate conflict, including under concurrent requests.
 - Archive remains reversible, permanent deletion cascades dependent private data, and archived Discoveries still prevent duplicates.
-- Cross-user authorization and backend persistence/API tests pass for Discoveries, Spaces, and tags.
+- Cross-user authorization and backend persistence/API tests pass for Discoveries and Spaces.
 
 **Discovery MVP status:** The private Discovery capture, retrieval, search/filter, edit,
 favourite, archive/restore, and delete slice is implemented by revision `20260805_0003`. Spaces and
@@ -105,9 +105,9 @@ database-enforced tenant consistency. Create/list/read/rename/delete, idempotent
 removal, Space contents, and the responsive library UI are implemented. Tags remain postponed.
 
 **Spaces design status:** The production schema, ownership enforcement, API, UX, migration, security,
-scalability, and test plan are complete in the
-[Spaces feature implementation plan](spaces-implementation-plan.md). Implementation remains pending;
-it must not change authentication or existing Discovery behavior.
+scalability, and test plan are recorded in the
+[Spaces feature implementation plan](spaces-implementation-plan.md), consistent with the completed
+implementation.
 
 ## Phase 4 — Library retrieval and interface
 
@@ -179,7 +179,38 @@ Discovery save path.
 
 See the [AI Summaries implementation plan](ai-summaries-implementation-plan.md).
 
-## Phase 7 — Semantic search and memory intelligence
+## Phase 7 — Private Tags
+
+**Goal:** Add lightweight, user-controlled subjects that organize Discoveries across Spaces.
+
+**Deliverables (only):**
+
+- Tags Alembic migration
+- Tag and Discovery Tag persistence models
+- Owner-scoped Tag API
+- Idempotent Tag membership API
+- Bounded Tag summaries in Discovery responses
+- Responsive Tag management and assignment UI
+- One-Tag library filtering composed with existing filters
+- Backend, frontend, migration, authorization, concurrency, cascade, and regression tests
+- Updated Tags implementation, database-decision, API, architecture, schema, ER, and product docs
+
+**Completion criteria:**
+
+- Per-user normalized names and every same-owner membership are enforced in PostgreSQL and the
+  service; another User's resources always appear not found.
+- Deleting a Tag removes memberships and never deletes or changes Discoveries.
+- Tag management, assignment, chips, and one-Tag filtering work accessibly on supported desktop and
+  mobile viewports and compose predictably with Space and existing filters.
+- The migration upgrades/downgrades cleanly on PostgreSQL, all new tests pass, and existing auth,
+  recovery, Discovery, metadata, Spaces, and AI Summary behavior remains passing.
+- No automatic/suggested Tags, semantic search, embeddings, Memory Threads, rediscovery, sharing,
+  collaboration, or browser-extension functionality is introduced.
+
+See the [Tags implementation plan](tags-implementation-plan.md),
+[database decisions](tags-database-decisions.md), and [API contract](tags-api-contract.md).
+
+## Phase 8 — Semantic search and memory intelligence
 
 **Goal:** Add private memory behaviour and grounded intelligence after the non-AI product is stable.
 
@@ -201,7 +232,7 @@ See the [AI Summaries implementation plan](ai-summaries-implementation-plan.md).
 - Evaluation fixtures demonstrate useful gains over keyword-only search for agreed queries.
 - The product degrades safely when AI services are unavailable and never fabricates saved sources.
 
-## Phase 8 — Capture and portability
+## Phase 9 — Capture and portability
 
 **Goal:** Make KeptIt easier to use wherever links are discovered and keep user data portable.
 
@@ -219,7 +250,7 @@ See the [AI Summaries implementation plan](ai-summaries-implementation-plan.md).
 - Export produces a documented, portable format.
 - Imports are previewable, idempotent where practical, and report invalid or duplicate records without losing valid entries.
 
-## Phase 9 — Production and portfolio release
+## Phase 10 — Production and portfolio release
 
 **Goal:** Harden, operate, deploy, and clearly present a production-ready portfolio application.
 

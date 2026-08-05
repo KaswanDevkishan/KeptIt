@@ -13,7 +13,9 @@ The model separates four kinds of data so provenance and deletion policy remain 
 | Inferred | normalized platform, summaries, topics, connections, threads, insights | Deterministic code or a versioned algorithm/model |
 | Operational and security | sessions, jobs, audit events | The service; access is restricted and retention is bounded |
 
-Release labels below mean **MVP** (the first production-worthy product schema), **near-term** (after saving works), and **future** (documented only until a demonstrated feature needs it). The next authentication sprint should create only `users` and `user_sessions`; the rest of the MVP schema belongs to the following Discovery sprint.
+Release labels below preserve the original evolutionary categories. Implemented status is stated
+per feature; **next planned phase** identifies approved design that has not been coded, and
+**future** remains documentation only until a demonstrated feature needs it.
 
 ## Identity and access
 
@@ -72,25 +74,34 @@ Release labels below mean **MVP** (the first production-worthy product schema), 
 The complete normative schema, API, behavior, security, migration, UX, and test design is in the
 [Spaces feature implementation plan](spaces-implementation-plan.md).
 
-### Tag (`tags`) — MVP
+### Tag (`tags`) — next planned phase
 
-- **Purpose:** Lightweight user-owned labels for cross-cutting description and retrieval.
+- **Purpose:** Lightweight user-owned descriptors for cross-cutting organization and retrieval.
 - **Important fields:** `id`, `user_id`, `name`, `normalized_name`, `created_at`, `updated_at`.
-- **Primary key:** UUID.
+- **Primary key:** Application-generated UUIDv4.
 - **Foreign keys:** `user_id -> users.id`.
 - **Unique constraints:** `(user_id, normalized_name)`.
-- **Indexes:** The unique owner/name index.
+- **Indexes:** Unique owner/name plus owner-leading alphabetical listing.
 - **Deletion:** Deleting a Tag deletes assignments, not Discoveries. User deletion cascades.
 
-### DiscoveryTag (`discovery_tags`) — MVP
+### DiscoveryTag (`discovery_tags`) — next planned phase
 
 - **Purpose:** Many-to-many assignment of Tags to Discoveries.
-- **Important fields:** `discovery_id`, `tag_id`, `created_at`.
-- **Primary key:** Composite `(discovery_id, tag_id)`.
-- **Foreign keys:** `discovery_id -> discoveries.id`, `tag_id -> tags.id`.
-- **Unique constraints:** The composite primary key.
-- **Indexes:** Reverse index `(tag_id, discovery_id)`.
-- **Deletion:** Cascade with either parent. As with Space membership, owner equality is enforced by scoped service operations and authorization tests.
+- **Important fields:** UUID `id`, immutable tenant `user_id`, `tag_id`, `discovery_id`, and
+  `created_at`.
+- **Primary key:** Application-generated UUIDv4 `id`.
+- **Foreign keys:** `user_id -> users.id`; tenant-aware `(user_id, tag_id) -> tags(user_id, id)`;
+  `discovery_id -> discoveries.id`. A narrow trigger verifies the Discovery owner equals `user_id`.
+- **Unique constraints:** `(tag_id, discovery_id)` prevents duplicate assignment; supporting
+  `(user_id, id)` uniqueness exists on Tags.
+- **Indexes:** `(user_id, discovery_id, tag_id)` and
+  `(user_id, tag_id, created_at DESC, id DESC)`.
+- **Deletion:** Cascade with either parent. Deleting a Tag removes assignments, never Discoveries.
+  User ownership is enforced in services and PostgreSQL.
+
+The complete normative design is in the [Tags implementation plan](tags-implementation-plan.md).
+Tags are user-authored private organization. Future automatic suggestions remain separate inferred
+data with provenance and cannot silently create or attach user Tags.
 
 ### DiscoveryIntent (`discovery_intents`) — near-term, documented only
 
@@ -251,11 +262,13 @@ not pre-empt a later normalized knowledge or retrieval design.
 ## Recommended implementation sequence
 
 1. **Authentication sprint:** `users`, then `user_sessions`. Add only the security audit events that have a concrete incident-response requirement; otherwise keep application logs until the audit boundary is agreed.
-2. **Discovery sprint:** `discoveries`, `spaces`, `space_memberships`, `tags`, `discovery_tags`.
+2. **Discovery sprint:** `discoveries`, then `spaces` and `space_memberships`.
 3. **Safe enrichment:** `metadata_records`, then `enrichment_jobs` when asynchronous processing is actually introduced.
 4. **AI Summaries:** add only the proposed one-current-row `ai_summaries` schema and its manual,
    privacy-first generation lifecycle; do not add embeddings or automatic Tags.
-5. **Memory behaviour:** introduce visits and rediscovery records only with their product experiences and retention controls.
-6. **Future intelligence:** introduce connections, Memory Threads, insights, normalized entity/topic records, and embeddings only with evaluation criteria, provenance, deletion, and provider-disclosure policies.
+5. **Tags:** add `tags` and `discovery_tags` with owner enforcement, assignment, and one-Tag
+   filtering; add no automatic suggestions or semantic behavior.
+6. **Memory behaviour:** introduce visits and rediscovery records only with their product experiences and retention controls.
+7. **Future intelligence:** introduce connections, Memory Threads, insights, normalized entity/topic records, and embeddings only with evaluation criteria, provenance, deletion, and provider-disclosure policies.
 
 This sequence preserves clean expansion points without making empty future tables part of the MVP.
