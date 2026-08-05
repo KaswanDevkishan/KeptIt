@@ -197,7 +197,23 @@ Use `uv run ruff format .` and `npm run format` to apply backend and frontend fo
 
 ## Deployment
 
-Coming soon. The initial production target is Render or another suitable managed platform, with final infrastructure selected and documented before launch.
+KeptIt is prepared for a limited private-beta topology with a React static site and FastAPI web
+service on Render, Neon PostgreSQL with pgvector, and optional backend-only Gemini embeddings:
+
+```text
+Browser -> Render Static Site -> Render FastAPI -> Neon PostgreSQL + pgvector
+                                             `-> Gemini embedding API
+```
+
+See the [deployment guide](docs/deployment.md), [deployment checklist](docs/deployment-checklist.md),
+and [rollback guide](docs/rollback.md). The root [Render Blueprint](render.yaml) defines both Render
+services but deliberately no Render database.
+
+This is deployment-ready documentation and baseline hardening for a private beta, not a claim that
+the hosted service is production-grade. Public deployment remains blocked by real password-reset
+email delivery, durable AI/embedding workers, distributed rate limiting, monitoring/alerting,
+backup/restore rehearsal, account deletion/export, and approved legal/privacy documents. Real AI
+features remain disabled in production until their documented worker and operational gates exist.
 
 ## Project documentation
 
@@ -219,6 +235,9 @@ Coming soon. The initial production target is Render or another suitable managed
 - [Tags database decisions](docs/tags-database-decisions.md)
 - [Tags API contract](docs/tags-api-contract.md)
 - [Semantic Search implementation plan](docs/semantic-search-implementation-plan.md)
+- [Private-beta deployment guide](docs/deployment.md)
+- [Deployment checklist](docs/deployment-checklist.md)
+- [Rollback guide](docs/rollback.md)
 - [Semantic Search database decisions](docs/semantic-search-database-decisions.md)
 - [Semantic Search API contract](docs/semantic-search-api-contract.md)
 - [Semantic Search document specification](docs/semantic-search-document-spec.md)
