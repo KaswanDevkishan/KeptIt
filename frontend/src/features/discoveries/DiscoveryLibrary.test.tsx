@@ -16,6 +16,8 @@ const discovery = {
   archived_at: null,
   created_at: '2026-08-05T00:00:00Z',
   updated_at: '2026-08-05T00:00:00Z',
+  display_title: 'Useful repository',
+  metadata: null,
 }
 
 function json(body: unknown, status = 200) {
@@ -32,6 +34,60 @@ function page(results: unknown[] = []) {
 afterEach(() => vi.restoreAllMocks())
 
 describe('Discovery library', () => {
+  it('shows fetched metadata, title fallback, thumbnail safety, and pending state', async () => {
+    const enriched = {
+      ...discovery,
+      custom_title: null,
+      metadata: {
+        status: 'succeeded',
+        title: 'Fetched source title',
+        description: 'A fetched description, distinct from the personal note.',
+        site_name: 'GitHub',
+        creator_or_publisher: 'keptit',
+        thumbnail_url: 'https://images.example/preview.jpg',
+        published_at: null,
+        fetched_at: '2026-08-05T01:00:00Z',
+        last_attempted_at: '2026-08-05T01:00:00Z',
+        failure_code: null,
+        failure_message_safe: null,
+        provider: 'github_api',
+        metadata_version: 1,
+      },
+    }
+    vi.spyOn(globalThis, 'fetch').mockResolvedValue(page([enriched]))
+    render(<DiscoveryLibrary />)
+    expect(await screen.findByRole('heading', { name: 'Fetched source title' })).toBeInTheDocument()
+    expect(screen.getByText(enriched.metadata.description)).toBeInTheDocument()
+    expect(screen.getByText('GitHub · keptit')).toBeInTheDocument()
+    expect(screen.getByRole('presentation')).toHaveAttribute('referrerpolicy', 'no-referrer')
+    expect(screen.getByText(discovery.original_url)).toBeInTheDocument()
+  })
+
+  it('shows pending and failed states without fake thumbnails and retries', async () => {
+    const pending = {
+      ...discovery,
+      id: 'pending',
+      metadata: { status: 'pending', thumbnail_url: null },
+    }
+    const failed = {
+      ...discovery,
+      id: 'failed',
+      custom_title: 'Failed card',
+      metadata: { status: 'failed', thumbnail_url: null },
+    }
+    const fetchMock = vi
+      .spyOn(globalThis, 'fetch')
+      .mockImplementation(() => Promise.resolve(page([pending, failed])))
+    render(<DiscoveryLibrary />)
+    expect(await screen.findByText('Source details pending.')).toBeInTheDocument()
+    expect(screen.getByText('Source details unavailable.')).toBeInTheDocument()
+    expect(screen.queryByRole('img')).not.toBeInTheDocument()
+    await userEvent.click(screen.getByRole('button', { name: 'Retry metadata' }))
+    expect(fetchMock.mock.calls.some((call) => call[0].toString().endsWith('/failed/enrich'))).toBe(
+      true,
+    )
+  })
+
   it('shows a genuine empty state and the accessible save form', async () => {
     vi.spyOn(globalThis, 'fetch').mockResolvedValue(page())
     render(<DiscoveryLibrary />)

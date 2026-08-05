@@ -8,6 +8,7 @@ const emptyInput: DiscoveryInput = { url: '', custom_title: '', personal_note: '
 
 function titleFor(discovery: Discovery) {
   if (discovery.custom_title) return discovery.custom_title
+  if (discovery.metadata?.title) return discovery.metadata.title
   try {
     return new URL(discovery.original_url).hostname.replace(/^www\./, '')
   } catch {
@@ -262,6 +263,19 @@ export function DiscoveryLibrary() {
       <div className="discovery-grid">
         {page?.results.map((discovery) => (
           <article className="discovery-card" key={discovery.id}>
+            {discovery.metadata?.thumbnail_url && (
+              <div className="discovery-thumbnail">
+                <img
+                  src={discovery.metadata.thumbnail_url}
+                  alt=""
+                  loading="lazy"
+                  referrerPolicy="no-referrer"
+                  onError={(event) => {
+                    event.currentTarget.hidden = true
+                  }}
+                />
+              </div>
+            )}
             <div className="discovery-card__meta">
               <span className="platform-badge">{discovery.platform.replace('_', ' ')}</span>
               <time dateTime={discovery.created_at}>
@@ -274,6 +288,53 @@ export function DiscoveryLibrary() {
               </a>
             </h2>
             <p className="discovery-url">{discovery.original_url}</p>
+            {discovery.metadata?.description && (
+              <p className="metadata-description">{discovery.metadata.description}</p>
+            )}
+            {(discovery.metadata?.site_name || discovery.metadata?.creator_or_publisher) && (
+              <p className="metadata-source">
+                {[discovery.metadata.site_name, discovery.metadata.creator_or_publisher]
+                  .filter(Boolean)
+                  .join(' · ')}
+              </p>
+            )}
+            {discovery.metadata?.status === 'pending' && (
+              <div className="metadata-status" role="status">
+                <span>Source details pending.</span>{' '}
+                <button
+                  className="text-button"
+                  onClick={() =>
+                    void mutate(
+                      () => discoveryApi.enrichDiscovery(discovery.id),
+                      'Source details added.',
+                    )
+                  }
+                >
+                  Add source details
+                </button>
+              </div>
+            )}
+            {discovery.metadata?.status === 'processing' && (
+              <p className="metadata-status" role="status">
+                Refreshing source details…
+              </p>
+            )}
+            {['failed', 'unsupported'].includes(discovery.metadata?.status ?? '') && (
+              <div className="metadata-status metadata-status--failed">
+                <span>Source details unavailable.</span>
+                <button
+                  className="text-button"
+                  onClick={() =>
+                    void mutate(
+                      () => discoveryApi.enrichDiscovery(discovery.id),
+                      'Source details refreshed.',
+                    )
+                  }
+                >
+                  Retry metadata
+                </button>
+              </div>
+            )}
             {discovery.personal_note && <p className="note-preview">{discovery.personal_note}</p>}
             {discovery.save_reason && <p className="save-reason">Why: {discovery.save_reason}</p>}
             <div className="card-actions">
@@ -356,7 +417,11 @@ export function DiscoveryLibrary() {
                 else await discoveryApi.createDiscovery(input)
                 setShowSave(false)
                 setEditing(null)
-                setFeedback(editing ? 'Discovery updated.' : 'Discovery saved.')
+                setFeedback(
+                  editing
+                    ? 'Discovery updated.'
+                    : 'Discovery saved. Source details can be added separately.',
+                )
                 await load()
               }}
             />

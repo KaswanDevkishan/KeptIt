@@ -88,6 +88,12 @@ favourite, archive/restore, and delete slice is implemented by revision `2026080
 Tags remain intentionally postponed under the narrower Discovery MVP scope; no organization or
 future-feature tables were created.
 
+**Metadata enrichment status:** Revision `20260805_0004` adds the single current Metadata Record
+and owner-triggered enrichment. Generic HTML, GitHub public repositories, optional official
+YouTube metadata, safe unsupported states, SSRF controls, retry, and library presentation are
+implemented. A durable worker, scheduling, distributed rate limits, and network-level egress
+controls remain production follow-up.
+
 ## Phase 4 — Library retrieval and interface
 
 **Goal:** Make the Discovery library useful and accessible across supported web viewports.

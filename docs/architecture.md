@@ -139,6 +139,20 @@ The initial save transaction stores the validated original URL, normalized compa
 
 Generic fetching must allow only public HTTP(S) destinations, resolve and re-check redirects, block private/reserved/link-local addresses, cap redirects, bytes, and duration, and accept only intended content types. Sanitize all third-party text and URLs before display. Record a bounded status such as pending, succeeded, unavailable, or failed; retries must be limited. Never download or persist copyrighted video media.
 
+The implemented first enrichment slice creates one current `metadata_records` row atomically with
+each Discovery and leaves it `pending`. `POST /api/v1/discoveries/{id}/enrich` performs a bounded
+attempt outside Discovery creation; `/enrich/retry` has identical idempotent behavior. This manual,
+in-process approach keeps saves and startup independent of third parties and avoids a premature
+queue. The service boundary can be called by a durable background worker later.
+
+The safe fetcher permits only HTTP(S), rejects credentials and every non-global resolved address,
+checks each redirect, limits redirects, time, intended content types, and decompressed bytes, and
+sends no cookies or caller-controlled headers. Provider adapters use GitHub's repository API with
+safe HTML fallback and YouTube's official API when configured. DNS is validated immediately before
+each request, but the high-level client does not pin that address through connection establishment;
+production should add egress policy and/or a reviewed IP-pinning transport for stronger rebinding
+defense.
+
 ## Duplicate-link detection approach
 
 Duplicates are scoped to one user. Before insertion, compute a versioned canonical URL and hash and query for an existing active or archived Discovery. A database unique constraint on `(user_id, canonical_url_hash)` is authoritative and handles concurrent saves. The API should return a conflict with the existing Discovery's safe identifier rather than create a silent duplicate. Future product policy may allow an explicit duplicate override, but it is not assumed for MVP.

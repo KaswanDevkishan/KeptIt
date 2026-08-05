@@ -123,6 +123,18 @@ existing canonical values and original URLs must not be silently overwritten.
 This phase deliberately adds no Spaces, Tags, metadata fetching, thumbnails, AI, semantic search,
 Memory Threads, rediscovery, sharing, extensions, or public libraries.
 
+### Exercise metadata enrichment
+
+Apply revision `20260805_0004`, save a Discovery, and use **Retry metadata** when its source details
+are unavailable. The create response remains successful and initially returns nested metadata with
+`pending` status. Generic HTML and GitHub repository enrichment need no secret. YouTube requires an
+optional server-only `YOUTUBE_API_KEY`; without it, YouTube is safely marked unsupported.
+Instagram, TikTok, Reddit, and X are not scraped.
+
+Remote thumbnails load directly in the browser with `Referrer-Policy: no-referrer`; their host
+still learns the browser IP and request. Metadata limits use the `METADATA_*` variables in
+`backend/.env.example`. Never put provider keys in frontend variables.
+
 Run frontend checks from `frontend/`:
 
 ```bash
