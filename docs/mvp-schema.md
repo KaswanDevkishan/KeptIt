@@ -69,22 +69,31 @@ Constraints/indexes:
 | `id` | `uuid` | not null; generated | Valid UUID | Primary key |
 | `user_id` | `uuid` | not null | Authenticated owner | FK to `users.id` `ON DELETE CASCADE` |
 | `name` | `varchar(100)` | not null | User-authored; trimmed; non-empty | — |
-| `normalized_name` | `varchar(100)` | not null | Stable trim/case normalization | Unique with `user_id` |
+| `normalized_name` | `varchar(200)` | not null | Versioned NFKC/case-fold normalization | Unique with `user_id` |
 | `description` | `varchar(500)` | null | User-authored plain text; empty becomes null | — |
 | `created_at` | `timestamptz` | not null; current time | UTC | — |
 | `updated_at` | `timestamptz` | not null; current time | UTC | — |
 
-Add unique `(user_id, normalized_name)`. Do not seed a default Space; an unassigned Discovery is valid.
+Add unique `(user_id, normalized_name)`, supporting unique `(user_id, id)`, owner-led pagination,
+and non-empty checks. `normalized_name` uses the versioned NFKC/case-fold contract. Do not seed a
+default Space; an unassigned Discovery is valid. The exact production schema is specified in the
+[Spaces feature implementation plan](spaces-implementation-plan.md).
 
 ## `space_memberships`
 
 | Field | PostgreSQL type | Null/default | Validation | Index/constraint |
 | --- | --- | --- | --- | --- |
-| `space_id` | `uuid` | not null | Space owned by current User | FK to `spaces.id` `ON DELETE CASCADE`; composite PK first |
-| `discovery_id` | `uuid` | not null | Discovery owned by same User | FK to `discoveries.id` `ON DELETE CASCADE`; composite PK second |
+| `id` | `uuid` | not null; generated | Valid UUID | Primary key |
+| `user_id` | `uuid` | not null | Authenticated owner; immutable | FK to `users.id` `ON DELETE CASCADE` |
+| `space_id` | `uuid` | not null | Space owned by current User | Tenant-aware FK with `user_id` to `spaces(user_id, id)` `ON DELETE CASCADE` |
+| `discovery_id` | `uuid` | not null | Discovery owned by same User | FK to `discoveries.id` `ON DELETE CASCADE`; owner trigger |
 | `created_at` | `timestamptz` | not null; current time | UTC | — |
 
-Primary key `(space_id, discovery_id)` and reverse index `(discovery_id, space_id)`. The service must query both parents under the current `user_id` in the same transaction before inserting.
+Add unique `(space_id, discovery_id)`, owner-led Space contents index
+`(user_id, space_id, created_at DESC, id DESC)`, and reverse index
+`(user_id, discovery_id, space_id)`. The service must still query both parents under the current
+`user_id` in the same transaction before inserting; the composite Space foreign key and
+Discovery-owner trigger provide defense in depth without modifying Discoveries.
 
 ## `tags`
 

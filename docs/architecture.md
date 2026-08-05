@@ -56,6 +56,7 @@ Detailed decisions and schemas are documented in:
 - [Database decisions](database-decisions.md)
 - [Entity relationships](entity-relationship.md)
 - [MVP schema](mvp-schema.md)
+- [Spaces feature implementation plan](spaces-implementation-plan.md)
 
 ## Proposed backend modules
 

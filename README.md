@@ -176,6 +176,7 @@ Coming soon. The initial production target is Render or another suitable managed
 - [Database decisions](docs/database-decisions.md)
 - [Entity relationships](docs/entity-relationship.md)
 - [MVP schema](docs/mvp-schema.md)
+- [Spaces feature implementation plan](docs/spaces-implementation-plan.md)
 - [Roadmap](docs/roadmap.md)
 - [Local development](docs/local-development.md)
 - [Coding-agent guidance](AGENTS.md)

@@ -94,6 +94,11 @@ YouTube metadata, safe unsupported states, SSRF controls, retry, and library pre
 implemented. A durable worker, scheduling, distributed rate limits, and network-level egress
 controls remain production follow-up.
 
+**Spaces design status:** The production schema, ownership enforcement, API, UX, migration, security,
+scalability, and test plan are complete in the
+[Spaces feature implementation plan](spaces-implementation-plan.md). Implementation remains pending;
+it must not change authentication or existing Discovery behavior.
+
 ## Phase 4 — Library retrieval and interface
 
 **Goal:** Make the Discovery library useful and accessible across supported web viewports.

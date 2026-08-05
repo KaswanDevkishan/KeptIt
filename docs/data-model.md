@@ -62,12 +62,15 @@ Release labels below mean **MVP** (the first production-worthy product schema), 
 ### SpaceMembership (`space_memberships`) — MVP
 
 - **Purpose:** Many-to-many assignment of Discoveries to Spaces. “Membership” here means Discovery-to-Space membership, not user collaboration.
-- **Important fields:** `discovery_id`, `space_id`, `created_at`; optional future user-defined ordering.
-- **Primary key:** Composite `(space_id, discovery_id)`; no surrogate key is needed.
-- **Foreign keys:** `space_id -> spaces.id`, `discovery_id -> discoveries.id`.
-- **Unique constraints:** The composite primary key.
-- **Indexes:** Reverse index `(discovery_id, space_id)` in addition to the primary-key order.
-- **Deletion:** Cascade when either parent is deleted. The service must verify both parents have the same `user_id`; a database trigger is unnecessary initially, but tenant-scoped writes are mandatory.
+- **Important fields:** UUID `id`, immutable tenant `user_id`, `discovery_id`, `space_id`, and `created_at`; optional future user-defined ordering.
+- **Primary key:** UUID `id`.
+- **Foreign keys:** `user_id -> users.id`; tenant-aware `(user_id, space_id) -> spaces(user_id, id)`; and `discovery_id -> discoveries.id`. An ownership trigger verifies that the Discovery owner equals `user_id` without changing the Discovery schema.
+- **Unique constraints:** `(space_id, discovery_id)` prevents duplicate assignment; supporting `(user_id, id)` uniqueness exists on Spaces for its composite foreign key.
+- **Indexes:** Owner-led Space contents `(user_id, space_id, created_at DESC, id DESC)` and reverse Discovery lookup `(user_id, discovery_id, space_id)`.
+- **Deletion:** Cascade when either parent is deleted. The Space composite foreign key and Discovery-owner trigger make cross-owner assignment impossible in the database; tenant-scoped service writes remain mandatory.
+
+The complete normative schema, API, behavior, security, migration, UX, and test design is in the
+[Spaces feature implementation plan](spaces-implementation-plan.md).
 
 ### Tag (`tags`) — MVP
 

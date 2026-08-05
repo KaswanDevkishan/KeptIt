@@ -73,8 +73,10 @@ erDiagram
         text normalized_name
     }
     SPACE_MEMBERSHIP {
-        uuid space_id PK, FK
-        uuid discovery_id PK, FK
+        uuid id PK
+        uuid user_id FK
+        uuid space_id FK
+        uuid discovery_id FK
         timestamptz created_at
     }
     TAG {
@@ -217,8 +219,10 @@ erDiagram
         timestamptz updated_at
     }
     SPACE_MEMBERSHIP {
-        uuid space_id PK, FK
-        uuid discovery_id PK, FK
+        uuid id PK
+        uuid user_id FK
+        uuid space_id FK
+        uuid discovery_id FK
         timestamptz created_at
     }
     TAG {
@@ -250,7 +254,12 @@ erDiagram
 
 ## Ownership boundaries
 
-`users.id` is the tenant boundary. Top-level private tables carry `user_id` so normal queries can lead with ownership. Dependent tables inherit ownership through their parent, but creating a join requires loading both parents with the current user's scope. Future high-risk or bulk paths may denormalize `user_id` into joins and use composite foreign keys to enforce same-tenant membership; that complexity is not required for the initial schema.
+`users.id` is the tenant boundary. Top-level private tables carry `user_id` so normal queries can
+lead with ownership. Space Membership also carries immutable `user_id`; a composite tenant-aware
+foreign key to Space and a Discovery-owner trigger enforce same-owner assignment in
+PostgreSQL without modifying the Discovery schema. Creating the join still requires loading both
+parents with the current user's scope. Other dependent joins retain their documented enforcement
+strategy until their features are designed.
 
 Authentication establishes the current User. Authorization separately scopes access to each owned resource. Possession of a UUID is never evidence of access.
 
