@@ -125,8 +125,8 @@ describe('Semantic Search UX', () => {
       ),
     )
     await chooseMeaning()
-    expect(screen.getByText(/Find saved items by idea/)).toBeInTheDocument()
-    expect(screen.getByText(/notes, Tags, and Spaces are excluded/)).toBeInTheDocument()
+    expect(screen.getByText(/Meaning search may send approved titles/)).toBeInTheDocument()
+    expect(screen.getByText(/Notes, Tags, and Spaces are excluded/)).toBeInTheDocument()
     expect(localSpy).not.toHaveBeenCalled()
     expect(screen.queryByText(/\[0\./)).not.toBeInTheDocument()
   })
@@ -171,12 +171,16 @@ describe('Semantic Search UX', () => {
   it.each([
     ['feature_disabled', 'feature disabled'],
     ['provider_unavailable', 'provider unavailable'],
+    ['provider_rate_limited', 'provider rate limited'],
+    ['provider_timeout', 'provider timeout'],
   ])('shows keyword fallback for %s', async (reason, label) => {
     mockApi({ semanticBody: semantic([], reason) })
     render(<DiscoveryLibrary />)
     await chooseMeaning()
     await userEvent.type(screen.getByLabelText('Search Discoveries'), 'remember this')
     expect(await screen.findByText(new RegExp(label))).toBeInTheDocument()
+    expect(screen.getByLabelText('Keyword')).toBeEnabled()
+    expect(screen.queryByText(/api key|gemini-embedding|google error/i)).not.toBeInTheDocument()
   })
 
   it('passes Tag, Space, platform, favourite, and archive filters to meaning search', async () => {

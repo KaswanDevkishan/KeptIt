@@ -109,15 +109,15 @@ can simulate every error/dimension case without network access.
 | Option | Strengths | Trade-offs |
 | --- | --- | --- |
 | OpenAI embeddings | Simple Python/HTTP integration, documented usage/cost controls, established KeptIt adapter/key operations, stable selectable dimensions | Third-party private-data processing; model/price/rate policies require review |
-| Gemini embeddings | Strong multilingual options and selectable dimensions | Adds provider/key/SDK operations and current model-policy review |
+| Gemini embeddings | Implemented optional adapter: official `google-genai`, stable `gemini-embedding-001`, 1,536 dimensions, and retrieval document/query task types | Third-party processing; quotas and free-tier eligibility vary by account and time |
 | Cohere embeddings | Search-query/document modes, multilingual model, selectable dimensions | Adds another vendor boundary and task-specific adapter semantics |
 | Local sentence-transformer | Text stays local; offline after model acquisition | Model hosting/downloads, CPU/RAM, version pinning, packaging, and quality operations are materially heavier |
 
-Recommend optional OpenAI `text-embedding-3-small`, pinned at 1,536 dimensions, because KeptIt
-already has optional OpenAI server-only configuration and it minimizes new operational surface.
-This is revisitable before migration and deployment: benchmark representative English/Japanese/
-multilingual queries, verify current prices/rate limits/data controls, and compare at least one
-local or vendor alternative. No live provider is required for development or CI.
+OpenAI `text-embedding-3-small` and Gemini `gemini-embedding-001` are optional real adapters pinned
+to 1,536 dimensions. Gemini uses `RETRIEVAL_DOCUMENT` for the approved Discovery document and
+`RETRIEVAL_QUERY` for the transient query. It requires explicit real-provider enablement and a
+backend-only key, while missing credentials never block startup, fake-provider tests, or keyword
+search. No live provider is required for development or CI.
 
 ## Database design
 

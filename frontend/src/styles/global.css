@@ -837,10 +837,10 @@ h1 {
   align-items: center;
 }
 .meaning-disclosure {
-  flex-basis: 100%;
-  margin: 0;
+  margin: -1.75rem 1rem 2.5rem;
   color: var(--muted);
-  font-size: 0.82rem;
+  font-size: 0.78rem;
+  line-height: 1.5;
 }
 .meaning-status {
   margin: 0.5rem 0;

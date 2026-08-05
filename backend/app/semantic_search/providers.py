@@ -3,6 +3,10 @@ import math
 from dataclasses import dataclass
 from typing import Literal, Protocol
 
+import httpx
+from google import genai
+from google.genai import errors as genai_errors
+from google.genai import types as genai_types
 from openai import OpenAI
 
 from app.core.config import Settings
@@ -122,9 +126,91 @@ class OpenAIEmbeddingProvider:
         return [self.embed_one(text, purpose, timeout) for text in texts]
 
 
+class GeminiEmbeddingProvider:
+    provider = "gemini"
+    supported_model = "gemini-embedding-001"
+    supported_dimension = 1536
+
+    def __init__(self, settings: Settings) -> None:
+        if not settings.embedding_real_provider_enabled:
+            raise EmbeddingProviderError("not_configured", "Embedding provider is not configured.")
+        if not settings.gemini_api_key:
+            raise EmbeddingProviderError("not_configured", "Embedding provider is not configured.")
+        if (
+            settings.embedding_model != self.supported_model
+            or settings.embedding_dimension != self.supported_dimension
+        ):
+            raise EmbeddingProviderError(
+                "unsupported_configuration", "Embedding provider configuration is unsupported."
+            )
+        self.model, self.dimension = settings.embedding_model, settings.embedding_dimension
+        self.client = genai.Client(api_key=settings.gemini_api_key)
+
+    def embed_one(
+        self, text: str, purpose: Literal["document", "query"], timeout: float
+    ) -> EmbeddingResult:
+        task_type = "RETRIEVAL_DOCUMENT" if purpose == "document" else "RETRIEVAL_QUERY"
+        try:
+            response = self.client.models.embed_content(
+                model=self.model,
+                contents=text,
+                config=genai_types.EmbedContentConfig(
+                    task_type=task_type,
+                    output_dimensionality=self.dimension,
+                    http_options=genai_types.HttpOptions(timeout=int(timeout * 1000)),
+                ),
+            )
+            try:
+                embeddings = response.embeddings
+                if not embeddings or len(embeddings) != 1 or embeddings[0].values is None:
+                    raise ValueError
+                vector = [float(value) for value in embeddings[0].values]
+            except (AttributeError, IndexError, TypeError, ValueError) as exc:
+                raise EmbeddingProviderError(
+                    "invalid_output", "The embedding provider returned invalid output."
+                ) from exc
+            validate_vector(vector, self.dimension)
+            return EmbeddingResult(vector=vector, usage_tokens=None)
+        except EmbeddingProviderError:
+            raise
+        except Exception as exc:
+            raise _classify_gemini_error(exc) from exc
+
+    def embed_batch(
+        self, texts: list[str], purpose: Literal["document"], timeout: float
+    ) -> list[EmbeddingResult]:
+        return [self.embed_one(text, purpose, timeout) for text in texts]
+
+
+def _classify_gemini_error(exc: Exception) -> EmbeddingProviderError:
+    status = getattr(exc, "code", None)
+    name = type(exc).__name__.lower()
+    if isinstance(exc, (httpx.TimeoutException, TimeoutError)) or "timeout" in name:
+        code = "timeout"
+    elif status in {400, 401, 403}:
+        code = "invalid_credentials" if status in {400, 401} else "permission_denied"
+    elif status == 429:
+        code = "rate_limited"
+    elif status in {500, 502, 503, 504}:
+        code = "unavailable"
+    elif isinstance(exc, httpx.NetworkError):
+        code = "network_failure"
+    elif isinstance(exc, genai_errors.APIError):
+        code = "unknown_provider_failure"
+    else:
+        code = (
+            "network_failure"
+            if "connect" in name or "network" in name
+            else "unknown_provider_failure"
+        )
+    return EmbeddingProviderError(code, "The embedding provider is temporarily unavailable.")
+
+
 def get_provider(settings: Settings) -> EmbeddingProvider:
     if settings.embedding_provider == "fake":
         return FakeEmbeddingProvider(
             settings.embedding_model, settings.embedding_dimension, settings.embedding_fake_behavior
         )
-    return OpenAIEmbeddingProvider(settings)
+    if settings.embedding_provider == "openai":
+        return OpenAIEmbeddingProvider(settings)
+    return GeminiEmbeddingProvider(settings)

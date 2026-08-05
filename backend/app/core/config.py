@@ -31,6 +31,7 @@ class Settings(BaseSettings):
     ai_real_provider_enabled: bool = False
     ai_summary_provider: str = "fake"
     openai_api_key: str | None = None
+    gemini_api_key: str | None = None
     ai_summary_model: str = "gpt-4.1-mini"
     ai_summary_prompt_version: str = "ai-summary-v1"
     ai_summary_timeout_seconds: float = 15.0
@@ -135,8 +136,8 @@ class Settings(BaseSettings):
             raise ValueError("AI_SUMMARY_PROMPT_VERSION must be ai-summary-v1")
         if self.environment == "production" and self.ai_summaries_enabled:
             raise ValueError("AI summaries require the production durable worker rollout")
-        if self.embedding_provider not in {"fake", "openai"}:
-            raise ValueError("EMBEDDING_PROVIDER must be fake or openai")
+        if self.embedding_provider not in {"fake", "openai", "gemini"}:
+            raise ValueError("EMBEDDING_PROVIDER must be fake, openai, or gemini")
         if self.embedding_document_version != "semantic-discovery-v1":
             raise ValueError("EMBEDDING_DOCUMENT_VERSION must be semantic-discovery-v1")
         if self.embedding_dimension != 1536:
@@ -147,6 +148,8 @@ class Settings(BaseSettings):
             and (not self.embedding_real_provider_enabled or not self.openai_api_key)
         ):
             raise ValueError("OpenAI embeddings require real-provider enablement and a key")
+        if self.embedding_provider == "gemini" and self.embedding_model != "gemini-embedding-001":
+            raise ValueError("Gemini embeddings require EMBEDDING_MODEL=gemini-embedding-001")
         if self.environment == "production" and self.semantic_search_enabled:
             raise ValueError("Semantic Search requires the production durable worker rollout")
         return self
