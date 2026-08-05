@@ -1,0 +1,87 @@
+services:
+  - type: web
+    name: keptit-api
+    runtime: python
+    plan: free
+    region: singapore
+    rootDir: backend
+    buildCommand: pip install uv==0.11.32 && uv sync --frozen --no-dev
+    preDeployCommand: uv run alembic upgrade head
+    startCommand: uv run uvicorn app.main:app --host 0.0.0.0 --port $PORT --workers 1 --log-level $LOG_LEVEL --no-access-log
+    healthCheckPath: /api/v1/readiness
+    autoDeployTrigger: checksPass
+    numInstances: 1
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.12.11
+      - key: ENVIRONMENT
+        value: production
+      - key: DATABASE_URL
+        sync: false
+      - key: DATABASE_MIGRATION_URL
+        sync: false
+      - key: CORS_ORIGINS
+        sync: false
+      - key: FRONTEND_PASSWORD_RESET_URL
+        sync: false
+      - key: SESSION_COOKIE_SECURE
+        value: "true"
+      - key: SESSION_COOKIE_SAMESITE
+        value: none
+      - key: EMAIL_BACKEND
+        value: disabled
+      - key: SPACES_CURSOR_SECRET
+        generateValue: true
+      - key: AI_SUMMARIES_ENABLED
+        value: "false"
+      - key: SEMANTIC_SEARCH_ENABLED
+        value: "false"
+      - key: EMBEDDING_REAL_PROVIDER_ENABLED
+        value: "false"
+      - key: EMBEDDING_PROVIDER
+        value: gemini
+      - key: EMBEDDING_MODEL
+        value: gemini-embedding-001
+      - key: EMBEDDING_DIMENSION
+        value: "1536"
+      - key: GEMINI_API_KEY
+        sync: false
+      - key: LOG_LEVEL
+        value: info
+
+  - type: web
+    name: keptit-web
+    runtime: static
+    rootDir: frontend
+    buildCommand: npm ci && npm run build
+    staticPublishPath: dist
+    autoDeployTrigger: checksPass
+    envVars:
+      - key: VITE_API_BASE_URL
+        sync: false
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html
+    headers:
+      - path: /*
+        name: X-Content-Type-Options
+        value: nosniff
+      - path: /*
+        name: Referrer-Policy
+        value: no-referrer
+      - path: /*
+        name: Permissions-Policy
+        value: camera=(), microphone=(), geolocation=()
+      - path: /*
+        name: X-Frame-Options
+        value: DENY
+      - path: /*
+        name: Content-Security-Policy
+        value: "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; connect-src 'self' https:; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'"
+      - path: /index.html
+        name: Cache-Control
+        value: no-cache, no-store, must-revalidate
+      - path: /assets/*
+        name: Cache-Control
+        value: public, max-age=31536000, immutable

@@ -1,5 +1,6 @@
 from functools import lru_cache
 from pathlib import Path
+from urllib.parse import urlsplit
 
 from pydantic import AnyHttpUrl, field_validator, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
@@ -10,6 +11,8 @@ class Settings(BaseSettings):
     environment: str = "development"
     api_v1_prefix: str = "/api/v1"
     database_url: str = "postgresql+psycopg://keptit:keptit@localhost:5432/keptit"
+    database_migration_url: str | None = None
+    database_connect_timeout_seconds: int = 5
     cors_origins: list[AnyHttpUrl] = [AnyHttpUrl("http://localhost:5173")]
     session_cookie_name: str = "keptit_session"
     session_cookie_secure: bool = False
@@ -66,6 +69,7 @@ class Settings(BaseSettings):
     embedding_cost_rate: int | None = None
     embedding_fake_behavior: str = "success"
     embedding_backfill_enabled: bool = True
+    log_level: str = "INFO"
 
     @field_validator("session_cookie_samesite")
     @classmethod
@@ -82,6 +86,13 @@ class Settings(BaseSettings):
             raise ValueError("must be between 300 and 31536000 seconds")
         return value
 
+    @field_validator("database_connect_timeout_seconds")
+    @classmethod
+    def validate_database_connect_timeout(cls, value: int) -> int:
+        if not 1 <= value <= 30:
+            raise ValueError("must be between 1 and 30 seconds")
+        return value
+
     @field_validator("password_reset_token_lifetime_seconds")
     @classmethod
     def validate_password_reset_lifetime(cls, value: int) -> int:
@@ -95,6 +106,28 @@ class Settings(BaseSettings):
         if value not in {"development_file", "disabled"}:
             raise ValueError("must be one of: development_file, disabled")
         return value
+
+    @field_validator(
+        "database_migration_url",
+        "openai_api_key",
+        "gemini_api_key",
+        "youtube_api_key",
+        "ai_summary_cost_input_rate",
+        "ai_summary_cost_output_rate",
+        "embedding_cost_rate",
+        mode="before",
+    )
+    @classmethod
+    def empty_string_as_none(cls, value: object) -> object:
+        return None if isinstance(value, str) and not value.strip() else value
+
+    @field_validator("log_level")
+    @classmethod
+    def validate_log_level(cls, value: str) -> str:
+        normalized = value.upper()
+        if normalized not in {"CRITICAL", "ERROR", "WARNING", "INFO", "DEBUG"}:
+            raise ValueError("must be a standard Python log level")
+        return normalized
 
     @field_validator("metadata_connect_timeout_seconds", "metadata_read_timeout_seconds")
     @classmethod
@@ -121,10 +154,33 @@ class Settings(BaseSettings):
     def require_secure_production_cookie(self) -> "Settings":
         if self.environment == "production" and not self.session_cookie_secure:
             raise ValueError("SESSION_COOKIE_SECURE must be true in production")
+        if self.environment == "production" and self.session_cookie_samesite != "none":
+            raise ValueError("Render cross-site production requires SESSION_COOKIE_SAMESITE=none")
         if self.session_cookie_samesite == "none" and not self.session_cookie_secure:
             raise ValueError("SameSite=None requires SESSION_COOKIE_SECURE=true")
         if self.environment == "production" and self.email_backend == "development_file":
             raise ValueError("development email backend cannot be used in production")
+        if self.environment == "production":
+            if not self.cors_origins:
+                raise ValueError("CORS_ORIGINS must contain at least one frontend origin")
+            for origin in self.cors_origins:
+                parsed = urlsplit(str(origin))
+                if parsed.scheme != "https":
+                    raise ValueError("production CORS origins must use HTTPS")
+                if parsed.hostname in {"localhost", "127.0.0.1", "::1"}:
+                    raise ValueError("production CORS origins must not use localhost")
+                if (
+                    parsed.username
+                    or parsed.password
+                    or parsed.path not in {"", "/"}
+                    or parsed.query
+                    or parsed.fragment
+                ):
+                    raise ValueError("CORS_ORIGINS entries must be origins without paths")
+            reset_origin = urlsplit(str(self.frontend_password_reset_url))
+            allowed_origins = {str(origin).rstrip("/") for origin in self.cors_origins}
+            if f"{reset_origin.scheme}://{reset_origin.netloc}" not in allowed_origins:
+                raise ValueError("FRONTEND_PASSWORD_RESET_URL must use an allowed frontend origin")
         if (
             self.environment == "production"
             and self.spaces_cursor_secret == "development-only-spaces-cursor-secret"
@@ -136,6 +192,12 @@ class Settings(BaseSettings):
             raise ValueError("AI_SUMMARY_PROMPT_VERSION must be ai-summary-v1")
         if self.environment == "production" and self.ai_summaries_enabled:
             raise ValueError("AI summaries require the production durable worker rollout")
+        if (
+            self.ai_summaries_enabled
+            and self.ai_summary_provider == "openai"
+            and (not self.ai_real_provider_enabled or not self.openai_api_key)
+        ):
+            raise ValueError("OpenAI AI summaries require real-provider enablement and a key")
         if self.embedding_provider not in {"fake", "openai", "gemini"}:
             raise ValueError("EMBEDDING_PROVIDER must be fake, openai, or gemini")
         if self.embedding_document_version != "semantic-discovery-v1":
@@ -148,6 +210,12 @@ class Settings(BaseSettings):
             and (not self.embedding_real_provider_enabled or not self.openai_api_key)
         ):
             raise ValueError("OpenAI embeddings require real-provider enablement and a key")
+        if (
+            self.embedding_provider == "gemini"
+            and self.semantic_search_enabled
+            and (not self.embedding_real_provider_enabled or not self.gemini_api_key)
+        ):
+            raise ValueError("Gemini embeddings require real-provider enablement and a key")
         if self.embedding_provider == "gemini" and self.embedding_model != "gemini-embedding-001":
             raise ValueError("Gemini embeddings require EMBEDDING_MODEL=gemini-embedding-001")
         if self.environment == "production" and self.semantic_search_enabled:

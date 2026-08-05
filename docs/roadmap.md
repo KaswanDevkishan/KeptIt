@@ -304,3 +304,16 @@ the [Semantic Search implementation plan](semantic-search-implementation-plan.md
 - Critical flows meet the stated accessibility target.
 - The deployed service passes smoke tests and has documented incident and rollback procedures.
 - Portfolio documentation explains product choices, tradeoffs, testing, security, and operations without exposing secrets or user data.
+
+**Deployment-readiness status (2026-08-06):** Baseline private-beta deployment configuration is
+implemented: Render web/static services, Neon/pgvector and controlled Alembic guidance, liveness
+and database readiness, production environment validation, cross-site cookie/CORS policy, SPA
+routing, security/cache headers, and deployment/rollback checklists. No cloud deployment was
+performed and Phase 10 is not complete.
+
+Remaining blockers stay visible: production password-reset email delivery; durable metadata/AI/
+embedding workers; distributed IP/user rate limiting; monitoring and alerting; automated backups
+and tested restoration; export and account deletion; accessibility and security audits; incident
+response; secret rotation; provider privacy/legal review and consent; budgets; terms, privacy
+policy, and other legal documents. A hosted private beta must not be described as production-grade
+until these controls are implemented and verified.
