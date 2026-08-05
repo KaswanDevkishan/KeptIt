@@ -10,6 +10,7 @@ erDiagram
     USER ||--o{ DISCOVERY : owns
     USER ||--o{ SPACE : owns
     USER ||--o{ TAG : owns
+    USER ||--o{ DISCOVERY_TAG : scopes
     USER ||--o{ MEMORY_THREAD : owns
     USER ||--o{ DISCOVERY_CONNECTION : owns
     USER ||--o{ REDISCOVERY_EVENT : receives
@@ -19,8 +20,8 @@ erDiagram
 
     DISCOVERY ||--o{ SPACE_MEMBERSHIP : assigned_by
     SPACE ||--o{ SPACE_MEMBERSHIP : contains
-    DISCOVERY ||--o{ DISCOVERY_TAG : labeled_by
-    TAG ||--o{ DISCOVERY_TAG : labels
+    DISCOVERY ||--o{ DISCOVERY_TAG : assigned_by
+    TAG ||--o{ DISCOVERY_TAG : describes
 
     DISCOVERY ||--o| METADATA_RECORD : has_current
     DISCOVERY ||--o{ ENRICHMENT_JOB : processed_by
@@ -86,8 +87,10 @@ erDiagram
         text normalized_name
     }
     DISCOVERY_TAG {
-        uuid discovery_id PK, FK
-        uuid tag_id PK, FK
+        uuid id PK
+        uuid user_id FK
+        uuid tag_id FK
+        uuid discovery_id FK
         timestamptz created_at
     }
     DISCOVERY_INTENT {
@@ -175,10 +178,11 @@ erDiagram
     USER ||--o{ DISCOVERY : owns
     USER ||--o{ SPACE : owns
     USER ||--o{ TAG : owns
+    USER ||--o{ DISCOVERY_TAG : scopes
     DISCOVERY ||--o{ SPACE_MEMBERSHIP : assigned_by
     SPACE ||--o{ SPACE_MEMBERSHIP : contains
-    DISCOVERY ||--o{ DISCOVERY_TAG : labeled_by
-    TAG ||--o{ DISCOVERY_TAG : labels
+    DISCOVERY ||--o{ DISCOVERY_TAG : assigned_by
+    TAG ||--o{ DISCOVERY_TAG : describes
 
     USER {
         uuid id PK
@@ -234,8 +238,10 @@ erDiagram
         timestamptz updated_at
     }
     DISCOVERY_TAG {
-        uuid discovery_id PK, FK
-        uuid tag_id PK, FK
+        uuid id PK
+        uuid user_id FK
+        uuid tag_id FK
+        uuid discovery_id FK
         timestamptz created_at
     }
 ```
@@ -245,7 +251,8 @@ erDiagram
 - A User has zero or many User Sessions, Discoveries, Spaces, Tags, and future Memory Threads. Each of those rows has exactly one owning User.
 - A Discovery belongs to exactly one User. A User can independently preserve a URL another User has preserved; duplicate identity never crosses the owner boundary.
 - Discoveries and Spaces are many-to-many through Space Membership. A Discovery can be in no Spaces, and an empty Space is valid.
-- Discoveries and Tags are many-to-many through Discovery Tag. A Tag can exist before it is assigned.
+- Discoveries and Tags are many-to-many through Discovery Tag. A Tag can exist before it is
+  assigned; each join has its own UUID identity and immutable owner key.
 - A Discovery has zero or one current Metadata Record. It can have many Enrichment Jobs, Visits, Intents, Rediscovery Events, and connections.
 - A Discovery Connection has exactly one source and target Discovery. Both must belong to the connection's User and must differ.
 - Discoveries and Memory Threads are many-to-many. An inferred membership can include a score and explanation; neither parent owns the other.
@@ -258,8 +265,9 @@ erDiagram
 lead with ownership. Space Membership also carries immutable `user_id`; a composite tenant-aware
 foreign key to Space and a Discovery-owner trigger enforce same-owner assignment in
 PostgreSQL without modifying the Discovery schema. Creating the join still requires loading both
-parents with the current user's scope. Other dependent joins retain their documented enforcement
-strategy until their features are designed.
+parents with the current user's scope. Discovery Tag uses the equivalent tenant-aware Tag foreign
+key and Discovery-owner trigger when its planned phase is implemented. Other dependent joins retain
+their documented enforcement strategy until their features are designed.
 
 Authentication establishes the current User. Authorization separately scopes access to each owned resource. Possession of a UUID is never evidence of access.
 
@@ -286,5 +294,9 @@ The MVP keeps stable identities, ownership, URLs, personal context, and organiza
 4. Add connections and Memory Threads as edge/membership tables referencing existing Discovery UUIDs.
 5. Add rediscovery, Insight, entity/topic, and embedding tables with explicit provenance and versioning. No vector column needs to be added to Discovery.
 6. If canonicalization improves, write a new normalization version and run a collision-reporting backfill before changing uniqueness. Never overwrite `original_url`.
+
+The MVP/current-growth diagram includes Tags because they are the next approved relational growth
+phase, not because the tables already exist. User Tags remain authored organization; future
+automatic suggestions are separate inferred data and are absent from both diagrams.
 
 This path avoids splitting a monolithic Discovery later because fetched and inferred data are separate from the beginning conceptually, while avoiding empty future tables operationally.

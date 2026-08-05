@@ -88,6 +88,11 @@ Discovery can belong to multiple Spaces, duplicate names are rejected after Unic
 and deleting a Space removes only its memberships. The responsive library sidebar supports Space
 creation, filtering, renaming, deletion, and per-card membership controls.
 
+Tags are the next planned coding phase and are not implemented. The approved design uses private,
+owner-scoped Tags and relational Discovery assignments for cross-Space subjects, plus one-Tag
+library filtering. It deliberately excludes automatic or suggested Tags and all semantic-search
+behavior.
+
 Metadata enrichment is a separate, best-effort phase. Saving creates a `pending` metadata record;
 the owner can request enrichment without changing the original URL, custom title, note, or save
 reason. Generic public HTML and public GitHub repositories are supported. YouTube uses the official
@@ -96,13 +101,13 @@ unsupported rather than scraped. KeptIt never downloads platform videos.
 
 ## Development roadmap
 
-Development begins with product and architecture decisions, followed by application scaffolding,
-authentication, the core Discovery experience, and safe metadata enrichment. The next planned
-coding phase adds optional manual AI Summaries; semantic search and embeddings remain a separate
-following phase. AI Summaries are disabled by default and no provider is required for local
-startup. Production hardening, accessibility, monitoring, backups, and deployment complete the
-portfolio release. See [docs/roadmap.md](docs/roadmap.md) and the
-[AI Summaries implementation plan](docs/ai-summaries-implementation-plan.md).
+Development began with product and architecture decisions, followed by application scaffolding,
+authentication, the core Discovery experience, safe metadata enrichment, Spaces, and optional
+manual AI Summaries. The next planned coding phase is private, user-controlled Tags with relational
+assignments and one-Tag library filtering. Tags are designed but not implemented. Automatic Tags,
+AI suggestions, semantic search, and embeddings remain later, separate work. See
+[docs/roadmap.md](docs/roadmap.md), the [Tags implementation plan](docs/tags-implementation-plan.md),
+and the [AI Summaries implementation plan](docs/ai-summaries-implementation-plan.md).
 
 ## Privacy principles
 
@@ -198,4 +203,7 @@ Coming soon. The initial production target is Render or another suitable managed
 - [AI Summaries database decisions](docs/ai-summaries-database-decisions.md)
 - [AI Summaries API contract](docs/ai-summaries-api-contract.md)
 - [AI Summaries prompt specification](docs/ai-summaries-prompt-spec.md)
+- [Tags implementation plan](docs/tags-implementation-plan.md)
+- [Tags database decisions](docs/tags-database-decisions.md)
+- [Tags API contract](docs/tags-api-contract.md)
 - [Coding-agent guidance](AGENTS.md)

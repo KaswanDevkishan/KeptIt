@@ -40,7 +40,10 @@ The web and API processes should be independently deployable. Metadata work shou
 
 PostgreSQL is the source of truth for users, server-side sessions, Discoveries, Spaces, tags, and their relationships. It provides transactional integrity, ownership constraints, uniqueness guarantees, indexes for library queries, and later full-text/vector capabilities. Alembic owns all schema evolution.
 
-Initial entities are `users`, `user_sessions`, `discoveries`, `spaces`, `space_memberships`, `tags`, and `discovery_tags`. Ownership is explicit on top-level user resources. A per-user unique constraint on the canonical URL hash provides concurrency-safe duplicate protection.
+Implemented core entities include `users`, `user_sessions`, `discoveries`, `spaces`, and
+`space_memberships`; the next planned organizational entities are `tags` and `discovery_tags`.
+Ownership is explicit on top-level user resources. A per-user unique constraint on the canonical
+URL hash provides concurrency-safe duplicate protection.
 
 ## Core data-model direction
 
@@ -57,6 +60,24 @@ Detailed decisions and schemas are documented in:
 - [Entity relationships](entity-relationship.md)
 - [MVP schema](mvp-schema.md)
 - [Spaces feature implementation plan](spaces-implementation-plan.md)
+- [Tags implementation plan](tags-implementation-plan.md)
+
+## Tags architecture (next planned phase)
+
+Tags are private, user-authored cross-Space descriptors: a Space answers where a Discovery belongs,
+while a Tag answers what it is about. `tags` owns stable names and `discovery_tags` represents the
+many-to-many relationship. Both tables carry an owner boundary; membership uses immutable
+`user_id`, a tenant-aware Tag foreign key, and the same narrow Discovery-owner trigger pattern as
+the implemented Spaces feature. Owner-scoped service queries remain mandatory and foreign resources
+behave as not found.
+
+Discovery list/detail responses will include bounded `{id, name}` Tag summaries loaded without
+N+1 queries. Assignment and one-Tag library filtering do not alter URL identity, metadata, AI
+Summary behavior, archive state, or Space membership. User Tags remain distinct from AI Summary
+topics. A later AI system may propose existing Tag IDs or candidate text for explicit acceptance,
+but inferred suggestions require separate provenance and are not added to the user-authored Tag
+tables automatically. See the [implementation plan](tags-implementation-plan.md),
+[database decisions](tags-database-decisions.md), and [API contract](tags-api-contract.md).
 
 ## AI Summaries architecture (next phase)
 

@@ -2,7 +2,9 @@
 
 ## Scope
 
-The smallest production-worthy product schema is seven tables: `users`, `user_sessions`, `discoveries`, `spaces`, `space_memberships`, `tags`, and `discovery_tags`. The next implementation sprint creates only `users` and `user_sessions`; the five Discovery and organization tables follow in the next phase.
+The production schema has grown incrementally through authentication, Discoveries, metadata,
+Spaces, and optional AI Summaries. The next approved growth phase adds `tags` and `discovery_tags`;
+they are documented here but do not exist yet.
 
 All IDs are PostgreSQL `uuid`. All instants are `timestamptz` and UTC. Unless stated otherwise, UUIDs and timestamps are supplied consistently by the application or database and are not user-controlled.
 
@@ -102,21 +104,31 @@ Discovery-owner trigger provide defense in depth without modifying Discoveries.
 | `id` | `uuid` | not null; generated | Valid UUID | Primary key |
 | `user_id` | `uuid` | not null | Authenticated owner | FK to `users.id` `ON DELETE CASCADE` |
 | `name` | `varchar(50)` | not null | User-authored; trimmed; non-empty | — |
-| `normalized_name` | `varchar(50)` | not null | Stable trim/case normalization | Unique with `user_id` |
+| `normalized_name` | `text` | not null | NFKC then Unicode case-fold comparison key | Unique with `user_id` |
 | `created_at` | `timestamptz` | not null; current time | UTC | — |
 | `updated_at` | `timestamptz` | not null; current time | UTC | — |
 
-Add unique `(user_id, normalized_name)`. Preserve display casing in `name`.
+Add unique `(user_id, normalized_name)`, supporting unique `(user_id, id)`, non-empty checks, and
+an owner-leading alphabetical index `(user_id, normalized_name, id)` if query-plan rehearsal shows
+the appended pagination key is useful. Names are 1–50 Unicode code points after outer-whitespace
+trimming; reject null/control characters. Do not collapse internal whitespace. Preserve display
+spelling in `name`. No color column belongs in MVP.
 
 ## `discovery_tags`
 
 | Field | PostgreSQL type | Null/default | Validation | Index/constraint |
 | --- | --- | --- | --- | --- |
-| `discovery_id` | `uuid` | not null | Discovery owned by current User | FK to `discoveries.id` `ON DELETE CASCADE`; composite PK first |
-| `tag_id` | `uuid` | not null | Tag owned by same User | FK to `tags.id` `ON DELETE CASCADE`; composite PK second |
+| `id` | `uuid` | not null; application-generated UUIDv4 | Valid UUID | Primary key |
+| `user_id` | `uuid` | not null | Authenticated owner; immutable | FK to `users.id` `ON DELETE CASCADE` |
+| `tag_id` | `uuid` | not null | Tag owned by same User | Tenant-aware FK with `user_id` to `tags(user_id, id)` `ON DELETE CASCADE` |
+| `discovery_id` | `uuid` | not null | Discovery owned by current User | FK to `discoveries.id` `ON DELETE CASCADE`; owner trigger |
 | `created_at` | `timestamptz` | not null; current time | UTC | — |
 
-Primary key `(discovery_id, tag_id)` and reverse index `(tag_id, discovery_id)`. Enforce same-owner assignment in scoped service operations and cross-user tests.
+Add unique `(tag_id, discovery_id)`, `(user_id, discovery_id, tag_id)`, and
+`(user_id, tag_id, created_at DESC, id DESC)`. The service loads both parents under the current
+User; a composite Tag foreign key and narrow Discovery-owner trigger enforce same-owner assignment
+in PostgreSQL. Deleting a Tag deletes memberships only. See the
+[Tags implementation plan](tags-implementation-plan.md) for the normative schema.
 
 ## Naming and foreign-key conventions
 
@@ -131,20 +143,23 @@ Primary key `(discovery_id, tag_id)` and reverse index `(tag_id, discovery_id)`.
 
 Use small Alembic revisions with reviewed downgrade behavior:
 
-1. Enable an approved UUID approach and `citext` if selected; create `users`.
-2. Create `user_sessions` and its indexes. This completes the next authentication coding phase.
-3. Create `discoveries` and duplicate/library indexes.
-4. Create `spaces` and `tags`.
-5. Create `space_memberships` and `discovery_tags`.
+1. Existing revisions created identity, Discoveries, metadata, Spaces, and optional AI Summaries.
+2. The planned Tags revision creates `tags` and all of its named constraints/indexes.
+3. The same focused revision creates `discovery_tags`, ownership enforcement, and indexes after both
+   parent tables exist.
 
-Steps 3–5 belong to the following Discovery phase. Splitting identity from product tables makes authentication independently reviewable; joins must follow both parents.
+No backfill is required. Downgrade drops the join/trigger before Tags and must not alter existing
+Discoveries or other implemented tables.
 
 ## Seed data
 
 No production seed data is required. Registration creates Users; users create their own Spaces and Tags. Tests should use factories/fixtures with clearly synthetic credentials and URLs. Development-only sample data must be opt-in, deterministic, and never part of production migrations.
 
-## Explicit exclusions
+## Explicit exclusions from the planned Tags revision
 
-The first schema does not include fetched metadata, metadata history, enrichment jobs, visits or counters, structured intents, connections, rediscovery events or feedback, Memory Threads, Insights, extracted entities/topics, summaries, embeddings, vector indexes, weekly digests, sharing, collaboration, or a graph database. Audit Events should be added only when the authentication implementation defines concrete security events and retention; privacy-safe structured application logs can cover the initial development environment.
-
-These exclusions are deliberate. Each future table should arrive with the behavior, authorization cases, deletion rules, retention policy, and tests that make it useful.
+Metadata and optional AI Summary tables arrived in their own implemented revisions; the Tags
+revision does not change them. It adds no metadata history, generic jobs, visits/counters,
+structured intents, connections, rediscovery records, Memory Threads, Insights, extracted
+entity/topic tables, automatic or suggested Tags, embeddings, vector indexes, weekly digests,
+sharing, collaboration, or graph database. Each later table must arrive with the behavior,
+authorization cases, deletion rules, retention policy, and tests that make it useful.
