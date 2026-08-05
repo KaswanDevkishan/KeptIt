@@ -2,8 +2,9 @@
 
 ## Status and scope
 
-This document is the normative implementation design for KeptIt's private Spaces feature. It is
-documentation only: no application code or migration is part of this change.
+This document is the normative implementation design for KeptIt's private Spaces feature. The
+feature is implemented by Alembic revision `20260805_0005`, the owner-scoped Spaces API/service
+layer, and the responsive library Spaces interface.
 
 A Space is a named, user-owned organizational container. A Discovery may be assigned to zero, one,
 or many Spaces, and a Space may contain zero or many Discoveries. Spaces are private and have

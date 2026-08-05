@@ -26,6 +26,7 @@ class Settings(BaseSettings):
     metadata_max_redirects: int = 3
     metadata_user_agent: str = "KeptIt-Metadata/1.0 (+https://keptit.example)"
     youtube_api_key: str | None = None
+    spaces_cursor_secret: str = "development-only-spaces-cursor-secret"
 
     @field_validator("session_cookie_samesite")
     @classmethod
@@ -85,6 +86,11 @@ class Settings(BaseSettings):
             raise ValueError("SameSite=None requires SESSION_COOKIE_SECURE=true")
         if self.environment == "production" and self.email_backend == "development_file":
             raise ValueError("development email backend cannot be used in production")
+        if (
+            self.environment == "production"
+            and self.spaces_cursor_secret == "development-only-spaces-cursor-secret"
+        ):
+            raise ValueError("SPACES_CURSOR_SECRET must be changed in production")
         return self
 
     model_config = SettingsConfigDict(

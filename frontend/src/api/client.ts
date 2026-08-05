@@ -1,6 +1,6 @@
 import { API_BASE_URL } from './config'
 
-type Method = 'GET' | 'POST' | 'PATCH' | 'DELETE'
+type Method = 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE'
 
 interface RequestOptions {
   method?: Method
@@ -36,6 +36,8 @@ function safeError(response: Response, value: unknown): ApiError {
     invalid_password_reset: 'This password reset link is invalid or has expired.',
     invalid_url: 'Enter a valid public HTTP or HTTPS URL.',
     duplicate_discovery: 'This Discovery is already in your library.',
+    space_name_conflict: 'A Space with this name already exists.',
+    resource_not_found: 'That Space or Discovery could not be found.',
   }
 
   return new ApiError(
@@ -85,6 +87,7 @@ export async function apiRequest<T>(path: string, options: RequestOptions = {}):
 export const api = {
   get: <T>(path: string, signal?: AbortSignal) => apiRequest<T>(path, { signal }),
   post: <T>(path: string, body?: unknown) => apiRequest<T>(path, { method: 'POST', body }),
+  put: <T>(path: string, body?: unknown) => apiRequest<T>(path, { method: 'PUT', body }),
   patch: <T>(path: string, body: unknown) => apiRequest<T>(path, { method: 'PATCH', body }),
   delete: (path: string) => apiRequest<void>(path, { method: 'DELETE' }),
 }

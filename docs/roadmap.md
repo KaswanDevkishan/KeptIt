@@ -94,6 +94,10 @@ YouTube metadata, safe unsupported states, SSRF controls, retry, and library pre
 implemented. A durable worker, scheduling, distributed rate limits, and network-level egress
 controls remain production follow-up.
 
+**Spaces status:** Revision `20260805_0005` adds private owner-scoped Spaces and memberships with
+database-enforced tenant consistency. Create/list/read/rename/delete, idempotent assignment,
+removal, Space contents, and the responsive library UI are implemented. Tags remain postponed.
+
 **Spaces design status:** The production schema, ownership enforcement, API, UX, migration, security,
 scalability, and test plan are complete in the
 [Spaces feature implementation plan](spaces-implementation-plan.md). Implementation remains pending;
@@ -118,7 +122,7 @@ it must not change authentication or existing Discovery behavior.
 
 **Discovery MVP status:** The responsive authenticated library, save/edit dialogs, empty state,
 keyword/platform/archive/favourite filters, feedback, and destructive confirmation are complete.
-Space and Tag filtering remain postponed.
+Space filtering and membership controls are implemented. Tag filtering remains postponed.
 
 ## Phase 5 — Safe metadata enrichment
 
