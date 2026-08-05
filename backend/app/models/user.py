@@ -19,6 +19,7 @@ from app.db.base import Base
 if TYPE_CHECKING:
     from app.models.discovery import Discovery
     from app.models.space import Space, SpaceMembership
+    from app.models.tag import DiscoveryTag, Tag
 
 
 def utc_now() -> datetime:
@@ -57,6 +58,12 @@ class User(Base):
         back_populates="owner", cascade="all, delete-orphan", passive_deletes=True
     )
     space_memberships: Mapped[list["SpaceMembership"]] = relationship(
+        back_populates="owner", cascade="all, delete-orphan", passive_deletes=True
+    )
+    tags: Mapped[list["Tag"]] = relationship(
+        back_populates="owner", cascade="all, delete-orphan", passive_deletes=True
+    )
+    tag_memberships: Mapped[list["DiscoveryTag"]] = relationship(
         back_populates="owner", cascade="all, delete-orphan", passive_deletes=True
     )
 

@@ -88,10 +88,12 @@ Discovery can belong to multiple Spaces, duplicate names are rejected after Unic
 and deleting a Space removes only its memberships. The responsive library sidebar supports Space
 creation, filtering, renaming, deletion, and per-card membership controls.
 
-Tags are the next planned coding phase and are not implemented. The approved design uses private,
-owner-scoped Tags and relational Discovery assignments for cross-Space subjects, plus one-Tag
-library filtering. It deliberately excludes automatic or suggested Tags and all semantic-search
-behavior.
+Tags are implemented as private, owner-scoped descriptors with relational Discovery assignments.
+Users can create, search, rename, permanently delete, attach, detach, and filter by one Tag while
+combining Space and existing library filters. Discovery cards show up to three neutral Tag chips.
+Names use trimmed Unicode NFKC/case-fold uniqueness; limits are 500 Tags per user and 20 per
+Discovery. Deleting a Tag removes memberships only. Automatic/suggested Tags and semantic search
+remain excluded.
 
 Metadata enrichment is a separate, best-effort phase. Saving creates a `pending` metadata record;
 the owner can request enrichment without changing the original URL, custom title, note, or save
@@ -103,8 +105,8 @@ unsupported rather than scraped. KeptIt never downloads platform videos.
 
 Development began with product and architecture decisions, followed by application scaffolding,
 authentication, the core Discovery experience, safe metadata enrichment, Spaces, and optional
-manual AI Summaries. The next planned coding phase is private, user-controlled Tags with relational
-assignments and one-Tag library filtering. Tags are designed but not implemented. Automatic Tags,
+manual AI Summaries. Private, user-controlled Tags with relational assignments and one-Tag library
+filtering are implemented. Automatic Tags,
 AI suggestions, semantic search, and embeddings remain later, separate work. See
 [docs/roadmap.md](docs/roadmap.md), the [Tags implementation plan](docs/tags-implementation-plan.md),
 and the [AI Summaries implementation plan](docs/ai-summaries-implementation-plan.md).

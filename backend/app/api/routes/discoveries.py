@@ -31,6 +31,8 @@ def list_discoveries(
     favourite: bool | None = None,
     limit: Annotated[int, Query(ge=1, le=100)] = 20,
     offset: Annotated[int, Query(ge=0, le=100_000)] = 0,
+    tag_id: uuid.UUID | None = None,
+    space_id: uuid.UUID | None = None,
 ) -> DiscoveryList:
     results, total = discoveries.list_owned(
         db,
@@ -41,6 +43,8 @@ def list_discoveries(
         favourite=favourite,
         limit=limit,
         offset=offset,
+        tag_id=tag_id,
+        space_id=space_id,
     )
     return DiscoveryList(results=results, total=total, limit=limit, offset=offset)
 

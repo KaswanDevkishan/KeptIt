@@ -2,7 +2,8 @@
 
 ## Status, assumptions, and product goal
 
-This document is the normative design for KeptIt's next coding phase. Tags are not implemented.
+This document is the normative design implemented by revision `20260805_0007` and its associated
+backend and frontend feature code.
 The design assumes the existing authentication, Discoveries, metadata enrichment, Spaces, optional
 AI Summaries, trusted-origin policy, error envelope, and UUID conventions remain unchanged.
 
@@ -429,7 +430,6 @@ query paths and would weaken the single PostgreSQL ownership boundary.
 
 ## Unresolved decisions before coding
 
-No architectural decision blocks implementation. Product review should confirm the proposed
-500-Tags-per-User and 20-Tags-per-Discovery caps, whether card chips show two or three Tags before
-the overflow disclosure, and the exact mobile placement of the Tags section. These remain bounded
-configuration/presentation decisions and do not change the schema direction.
+No architectural decision blocks implementation. The approved limits are 500 Tags per User and 20
+Tags per Discovery. The implemented presentation shows three chips before overflow and places the
+responsive Tags section separately beneath Spaces.
