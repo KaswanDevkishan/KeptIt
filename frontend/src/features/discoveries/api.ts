@@ -12,6 +12,22 @@ export const platforms = [
 
 export type Platform = (typeof platforms)[number]
 
+export interface DiscoveryMetadata {
+  status: 'pending' | 'processing' | 'succeeded' | 'failed' | 'unsupported'
+  title: string | null
+  description: string | null
+  site_name: string | null
+  creator_or_publisher: string | null
+  thumbnail_url: string | null
+  published_at: string | null
+  fetched_at: string | null
+  last_attempted_at: string | null
+  failure_code: string | null
+  failure_message_safe: string | null
+  provider: string
+  metadata_version: number
+}
+
 export interface Discovery {
   id: string
   original_url: string
@@ -24,6 +40,8 @@ export interface Discovery {
   archived_at: string | null
   created_at: string
   updated_at: string
+  display_title: string
+  metadata: DiscoveryMetadata | null
 }
 
 export interface DiscoveryInput {
@@ -87,6 +105,10 @@ export function restoreDiscovery(id: string) {
 
 export function deleteDiscovery(id: string) {
   return api.delete(`/api/v1/discoveries/${id}`)
+}
+
+export function enrichDiscovery(id: string) {
+  return api.post<Discovery>(`/api/v1/discoveries/${id}/enrich`)
 }
 
 export function detectPlatformLocally(value: string): Platform | null {

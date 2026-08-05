@@ -80,6 +80,12 @@ require the existing session cookie, owner scope, and trusted-origin protection 
 Platform detection supports Instagram, YouTube, TikTok, Reddit, X/Twitter, GitHub, and
 `generic_web`.
 
+Metadata enrichment is a separate, best-effort phase. Saving creates a `pending` metadata record;
+the owner can request enrichment without changing the original URL, custom title, note, or save
+reason. Generic public HTML and public GitHub repositories are supported. YouTube uses the official
+Data API only when `YOUTUBE_API_KEY` is configured. Instagram, TikTok, Reddit, and X are reported as
+unsupported rather than scraped. KeptIt never downloads platform videos.
+
 ## Development roadmap
 
 Development begins with product and architecture decisions, followed by application scaffolding, authentication, the core Discovery experience, and safe metadata enrichment. AI enhancements follow only after the non-AI MVP is stable. Production hardening, accessibility, monitoring, backups, and deployment complete the portfolio release. See [docs/roadmap.md](docs/roadmap.md) for phased deliverables and completion criteria.

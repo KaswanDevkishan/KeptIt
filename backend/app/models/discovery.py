@@ -82,3 +82,54 @@ class Discovery(Base):
     )
 
     user: Mapped[User] = relationship(back_populates="discoveries")
+    metadata_record: Mapped["MetadataRecord | None"] = relationship(
+        back_populates="discovery", cascade="all, delete-orphan", uselist=False
+    )
+
+
+class MetadataRecord(Base):
+    __tablename__ = "metadata_records"
+    __table_args__ = (
+        CheckConstraint(
+            "status IN ('pending', 'processing', 'succeeded', 'failed', 'unsupported')",
+            name="ck_metadata_records_status_allowed",
+        ),
+        CheckConstraint("metadata_version > 0", name="ck_metadata_records_version_positive"),
+        CheckConstraint(
+            "failure_message_safe IS NULL OR length(failure_message_safe) <= 500",
+            name="ck_metadata_records_failure_message_length",
+        ),
+        UniqueConstraint("discovery_id", name="uq_metadata_records_discovery_id"),
+        Index("ix_metadata_records_status_last_attempted", "status", "last_attempted_at"),
+    )
+
+    id: Mapped[uuid.UUID] = mapped_column(primary_key=True, default=uuid.uuid4)
+    discovery_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey(
+            "discoveries.id",
+            ondelete="CASCADE",
+            name="fk_metadata_records_discovery_id_discoveries",
+        ),
+        nullable=False,
+    )
+    status: Mapped[str] = mapped_column(String(20), nullable=False, default="pending")
+    title: Mapped[str | None] = mapped_column(String(500))
+    description: Mapped[str | None] = mapped_column(String(2000))
+    site_name: Mapped[str | None] = mapped_column(String(200))
+    creator_or_publisher: Mapped[str | None] = mapped_column(String(300))
+    thumbnail_url: Mapped[str | None] = mapped_column(Text)
+    published_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    fetched_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    last_attempted_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    failure_code: Mapped[str | None] = mapped_column(String(80))
+    failure_message_safe: Mapped[str | None] = mapped_column(String(500))
+    provider: Mapped[str] = mapped_column(String(50), nullable=False, default="pending")
+    metadata_version: Mapped[int] = mapped_column(SmallInteger, nullable=False, default=1)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False, default=utc_now
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False, default=utc_now, onupdate=utc_now
+    )
+
+    discovery: Mapped[Discovery] = relationship(back_populates="metadata_record")

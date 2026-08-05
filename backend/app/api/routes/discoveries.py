@@ -4,6 +4,8 @@ from typing import Annotated
 from fastapi import APIRouter, Query, status
 
 from app.api.dependencies import CurrentUser, DbSession, TrustedOrigin
+from app.core.config import get_settings
+from app.metadata.service import enrich
 from app.models.discovery import Discovery
 from app.schemas.discovery import DiscoveryCreate, DiscoveryList, DiscoveryUpdate, PublicDiscovery
 from app.services import discoveries
@@ -46,6 +48,19 @@ def list_discoveries(
 @router.get("/{discovery_id}", response_model=PublicDiscovery)
 def get_discovery(discovery_id: uuid.UUID, db: DbSession, user: CurrentUser) -> Discovery:
     return discoveries.get_owned(db, user.id, discovery_id)
+
+
+@router.post("/{discovery_id}/enrich", response_model=PublicDiscovery)
+@router.post(
+    "/{discovery_id}/enrich/retry", response_model=PublicDiscovery, include_in_schema=False
+)
+def enrich_discovery(
+    discovery_id: uuid.UUID, db: DbSession, user: CurrentUser, _origin: TrustedOrigin
+) -> Discovery:
+    discovery = discoveries.get_owned(db, user.id, discovery_id)
+    enrich(db, discovery, get_settings())
+    db.refresh(discovery)
+    return discovery
 
 
 @router.patch("/{discovery_id}", response_model=PublicDiscovery)

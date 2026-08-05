@@ -20,6 +20,12 @@ class Settings(BaseSettings):
     password_reset_token_lifetime_seconds: int = 60 * 30
     email_backend: str = "development_file"
     development_email_outbox_path: Path = Path(".local/password-reset-outbox.jsonl")
+    metadata_connect_timeout_seconds: float = 3.0
+    metadata_read_timeout_seconds: float = 5.0
+    metadata_max_response_bytes: int = 1_000_000
+    metadata_max_redirects: int = 3
+    metadata_user_agent: str = "KeptIt-Metadata/1.0 (+https://keptit.example)"
+    youtube_api_key: str | None = None
 
     @field_validator("session_cookie_samesite")
     @classmethod
@@ -48,6 +54,27 @@ class Settings(BaseSettings):
     def validate_email_backend(cls, value: str) -> str:
         if value not in {"development_file", "disabled"}:
             raise ValueError("must be one of: development_file, disabled")
+        return value
+
+    @field_validator("metadata_connect_timeout_seconds", "metadata_read_timeout_seconds")
+    @classmethod
+    def validate_metadata_timeout(cls, value: float) -> float:
+        if not 0.1 <= value <= 30:
+            raise ValueError("must be between 0.1 and 30 seconds")
+        return value
+
+    @field_validator("metadata_max_response_bytes")
+    @classmethod
+    def validate_metadata_size(cls, value: int) -> int:
+        if not 16_384 <= value <= 5_000_000:
+            raise ValueError("must be between 16384 and 5000000 bytes")
+        return value
+
+    @field_validator("metadata_max_redirects")
+    @classmethod
+    def validate_metadata_redirects(cls, value: int) -> int:
+        if not 0 <= value <= 5:
+            raise ValueError("must be between 0 and 5")
         return value
 
     @model_validator(mode="after")

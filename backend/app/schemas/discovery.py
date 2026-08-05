@@ -1,7 +1,7 @@
 import uuid
 from datetime import datetime
 
-from pydantic import BaseModel, ConfigDict, Field, field_validator
+from pydantic import BaseModel, ConfigDict, Field, computed_field, field_validator
 
 from app.services.urls import Platform
 
@@ -51,6 +51,38 @@ class PublicDiscovery(BaseModel):
     archived_at: datetime | None
     created_at: datetime
     updated_at: datetime
+    metadata_record: "PublicMetadata | None" = Field(
+        default=None, validation_alias="metadata_record", serialization_alias="metadata"
+    )
+
+    @computed_field  # type: ignore[prop-decorator]
+    @property
+    def display_title(self) -> str:
+        if self.custom_title:
+            return self.custom_title
+        if self.metadata_record and self.metadata_record.title:
+            return self.metadata_record.title
+        from urllib.parse import urlsplit
+
+        return urlsplit(self.original_url).hostname or self.original_url
+
+
+class PublicMetadata(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    status: str
+    title: str | None
+    description: str | None
+    site_name: str | None
+    creator_or_publisher: str | None
+    thumbnail_url: str | None
+    published_at: datetime | None
+    fetched_at: datetime | None
+    last_attempted_at: datetime | None
+    failure_code: str | None
+    failure_message_safe: str | None
+    provider: str
+    metadata_version: int
 
 
 class DiscoveryList(BaseModel):

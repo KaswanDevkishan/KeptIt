@@ -6,6 +6,7 @@ from sqlalchemy import func, or_, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
+from app.metadata.service import ensure_record
 from app.models.discovery import Discovery
 from app.schemas.discovery import DiscoveryCreate, DiscoveryUpdate
 from app.services.urls import InvalidUrlError, Platform, normalize_url
@@ -67,6 +68,7 @@ def create(db: Session, user_id: uuid.UUID, payload: DiscoveryCreate) -> Discove
         save_reason=payload.save_reason,
     )
     db.add(discovery)
+    ensure_record(discovery)
     try:
         db.commit()
     except IntegrityError as exc:
