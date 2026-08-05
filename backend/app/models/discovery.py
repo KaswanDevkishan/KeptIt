@@ -20,6 +20,7 @@ from app.db.base import Base
 from app.models.user import User, utc_now
 
 if TYPE_CHECKING:
+    from app.models.ai_summary import AISummary
     from app.models.space import Space, SpaceMembership
 
 
@@ -94,6 +95,12 @@ class Discovery(Base):
     )
     spaces: Mapped[list["Space"]] = relationship(
         secondary="space_memberships", back_populates="discoveries", viewonly=True
+    )
+    ai_summary: Mapped["AISummary | None"] = relationship(
+        back_populates="discovery",
+        cascade="all, delete-orphan",
+        uselist=False,
+        passive_deletes=True,
     )
 
 

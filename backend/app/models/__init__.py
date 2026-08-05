@@ -3,6 +3,8 @@ from app.models.space import Space, SpaceMembership
 from app.models.user import PasswordResetToken, User, UserSession
 
 __all__ = [
+    "AISummary",
+    "AISummaryIdempotencyKey",
     "Discovery",
     "MetadataRecord",
     "PasswordResetToken",
@@ -11,3 +13,4 @@ __all__ = [
     "User",
     "UserSession",
 ]
+from app.models.ai_summary import AISummary, AISummaryIdempotencyKey
