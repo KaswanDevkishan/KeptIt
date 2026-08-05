@@ -8,6 +8,8 @@ from sqlalchemy.orm import Session
 
 from app.metadata.service import ensure_record
 from app.models.discovery import Discovery
+from app.models.space import SpaceMembership
+from app.models.tag import DiscoveryTag, Tag
 from app.schemas.discovery import DiscoveryCreate, DiscoveryUpdate
 from app.services.urls import InvalidUrlError, Platform, normalize_url
 
@@ -94,6 +96,8 @@ def list_owned(
     favourite: bool | None,
     limit: int,
     offset: int,
+    tag_id: uuid.UUID | None = None,
+    space_id: uuid.UUID | None = None,
 ) -> tuple[list[Discovery], int]:
     conditions = [Discovery.user_id == user_id]
     conditions.append(
@@ -103,6 +107,27 @@ def list_owned(
         conditions.append(Discovery.platform == platform.value)
     if favourite is not None:
         conditions.append(Discovery.is_favourite == favourite)
+    if tag_id is not None:
+        if db.scalar(select(Tag.id).where(Tag.user_id == user_id, Tag.id == tag_id)) is None:
+            raise HTTPException(
+                status_code=404,
+                detail={"code": "resource_not_found", "message": "Resource not found."},
+            )
+        conditions.append(DiscoveryTag.user_id == user_id)
+        conditions.append(DiscoveryTag.tag_id == tag_id)
+    if space_id is not None:
+        from app.models.space import Space
+
+        if (
+            db.scalar(select(Space.id).where(Space.user_id == user_id, Space.id == space_id))
+            is None
+        ):
+            raise HTTPException(
+                status_code=404,
+                detail={"code": "resource_not_found", "message": "Resource not found."},
+            )
+        conditions.append(SpaceMembership.user_id == user_id)
+        conditions.append(SpaceMembership.space_id == space_id)
     if q and (term := q.strip()):
         pattern = f"%{term}%"
         conditions.append(
@@ -113,11 +138,15 @@ def list_owned(
                 Discovery.canonical_url.ilike(pattern),
             )
         )
-    total = db.scalar(select(func.count()).select_from(Discovery).where(*conditions)) or 0
+    base = select(Discovery)
+    if tag_id is not None:
+        base = base.join(DiscoveryTag, DiscoveryTag.discovery_id == Discovery.id)
+    if space_id is not None:
+        base = base.join(SpaceMembership, SpaceMembership.discovery_id == Discovery.id)
+    total = db.scalar(select(func.count()).select_from(base.where(*conditions).subquery())) or 0
     results = list(
         db.scalars(
-            select(Discovery)
-            .where(*conditions)
+            base.where(*conditions)
             .order_by(Discovery.created_at.desc(), Discovery.id.desc())
             .limit(limit)
             .offset(offset)

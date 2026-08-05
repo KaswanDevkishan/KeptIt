@@ -42,6 +42,7 @@ export interface Discovery {
   updated_at: string
   display_title: string
   metadata: DiscoveryMetadata | null
+  tags: { id: string; name: string }[]
 }
 
 export interface DiscoveryInput {
@@ -65,6 +66,8 @@ export interface DiscoveryFilters {
   favourite?: boolean
   limit?: number
   offset?: number
+  tag_id?: string
+  space_id?: string
 }
 
 export interface DiscoveryPage {

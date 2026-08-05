@@ -144,7 +144,7 @@ in PostgreSQL. Deleting a Tag deletes memberships only. See the
 Use small Alembic revisions with reviewed downgrade behavior:
 
 1. Existing revisions created identity, Discoveries, metadata, Spaces, and optional AI Summaries.
-2. The planned Tags revision creates `tags` and all of its named constraints/indexes.
+2. Revision `20260805_0007` creates `tags` and all of its named constraints/indexes.
 3. The same focused revision creates `discovery_tags`, ownership enforcement, and indexes after both
    parent tables exist.
 

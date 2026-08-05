@@ -41,7 +41,7 @@ The web and API processes should be independently deployable. Metadata work shou
 PostgreSQL is the source of truth for users, server-side sessions, Discoveries, Spaces, tags, and their relationships. It provides transactional integrity, ownership constraints, uniqueness guarantees, indexes for library queries, and later full-text/vector capabilities. Alembic owns all schema evolution.
 
 Implemented core entities include `users`, `user_sessions`, `discoveries`, `spaces`, and
-`space_memberships`; the next planned organizational entities are `tags` and `discovery_tags`.
+`space_memberships`, `tags`, and `discovery_tags`.
 Ownership is explicit on top-level user resources. A per-user unique constraint on the canonical
 URL hash provides concurrency-safe duplicate protection.
 
@@ -62,7 +62,7 @@ Detailed decisions and schemas are documented in:
 - [Spaces feature implementation plan](spaces-implementation-plan.md)
 - [Tags implementation plan](tags-implementation-plan.md)
 
-## Tags architecture (next planned phase)
+## Tags architecture (implemented)
 
 Tags are private, user-authored cross-Space descriptors: a Space answers where a Discovery belongs,
 while a Tag answers what it is about. `tags` owns stable names and `discovery_tags` represents the

@@ -3,6 +3,8 @@ import { useCallback, useEffect, useState } from 'react'
 import { ApiError } from '../../api/client'
 import * as spaceApi from '../spaces/api'
 import type { Space } from '../spaces/api'
+import * as tagApi from '../tags/api'
+import type { Tag } from '../tags/api'
 import * as discoveryApi from './api'
 import type { Discovery, DiscoveryInput, Platform } from './api'
 
@@ -359,6 +361,78 @@ function SpaceForm({
   )
 }
 
+function TagForm({
+  title,
+  initial,
+  onSubmit,
+  onCancel,
+}: {
+  title: string
+  initial?: Tag
+  onSubmit: (name: string) => Promise<void>
+  onCancel: () => void
+}) {
+  const [name, setName] = useState(initial?.name ?? '')
+  const [error, setError] = useState('')
+  const [saving, setSaving] = useState(false)
+  async function submit(event: React.FormEvent) {
+    event.preventDefault()
+    const trimmed = name.trim()
+    if (!trimmed || [...trimmed].length > 50) {
+      setError('Tag names must contain 1 to 50 characters.')
+      return
+    }
+    setSaving(true)
+    setError('')
+    try {
+      await onSubmit(name)
+    } catch (caught) {
+      setError(caught instanceof ApiError ? caught.message : 'Could not save this Tag.')
+    } finally {
+      setSaving(false)
+    }
+  }
+  return (
+    <div className="dialog-backdrop" role="presentation">
+      <section
+        className="dialog"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="tag-dialog-title"
+      >
+        <h2 id="tag-dialog-title">{title}</h2>
+        <form className="discovery-form" onSubmit={(event) => void submit(event)}>
+          <label>
+            Tag name
+            <input
+              autoFocus
+              required
+              maxLength={50}
+              value={name}
+              aria-invalid={Boolean(error)}
+              onChange={(event) => setName(event.target.value)}
+            />
+          </label>
+          <p className="field-help">1–50 characters. Tags describe what a Discovery is about.</p>
+          {error && (
+            <p className="form-alert" role="alert">
+              {error}
+            </p>
+          )}
+          <div className="form-actions">
+            <button className="button button--quiet" type="button" onClick={onCancel}>
+              Cancel
+            </button>
+            <button className="button button--primary" disabled={saving} type="submit">
+              {saving ? 'Saving…' : initial ? 'Save changes' : 'Create Tag'}
+            </button>
+          </div>
+        </form>
+      </section>
+    </div>
+  )
+}
+
 export function DiscoveryLibrary() {
   const [page, setPage] = useState<discoveryApi.DiscoveryPage | null>(null)
   const [error, setError] = useState('')
@@ -376,6 +450,26 @@ export function DiscoveryLibrary() {
   const [editingSpace, setEditingSpace] = useState<Space | null>(null)
   const [memberships, setMemberships] = useState<Record<string, Set<string>>>({})
   const [membershipBusy, setMembershipBusy] = useState<string | null>(null)
+  const [tags, setTags] = useState<Tag[]>([])
+  const [tagsLoading, setTagsLoading] = useState(true)
+  const [tagSearch, setTagSearch] = useState('')
+  const [selectedTagId, setSelectedTagId] = useState<string | null>(null)
+  const [tagDialog, setTagDialog] = useState<'create' | 'rename' | 'delete' | null>(null)
+  const [editingTag, setEditingTag] = useState<Tag | null>(null)
+  const [tagMembershipBusy, setTagMembershipBusy] = useState<string | null>(null)
+
+  const loadTags = useCallback(async (signal?: AbortSignal) => {
+    setTagsLoading(true)
+    try {
+      const result = await tagApi.listTags(signal)
+      setTags(Array.isArray(result.items) ? result.items : [])
+    } catch (caught) {
+      if (!(caught instanceof DOMException && caught.name === 'AbortError'))
+        setError(caught instanceof ApiError ? caught.message : 'Could not load your Tags.')
+    } finally {
+      setTagsLoading(false)
+    }
+  }, [])
 
   const loadSpaces = useCallback(async (signal?: AbortSignal) => {
     setSpacesLoading(true)
@@ -402,7 +496,7 @@ export function DiscoveryLibrary() {
     async (signal?: AbortSignal) => {
       try {
         setError('')
-        if (selectedSpaceId) {
+        if (selectedSpaceId && !selectedTagId) {
           const spacePage = await spaceApi.listSpaceDiscoveries(
             selectedSpaceId,
             archived ? 'archived' : 'active',
@@ -422,7 +516,14 @@ export function DiscoveryLibrary() {
         } else {
           setPage(
             await discoveryApi.listDiscoveries(
-              { q, platform: platform || undefined, archived, favourite: favourite || undefined },
+              {
+                q,
+                platform: platform || undefined,
+                archived,
+                favourite: favourite || undefined,
+                space_id: selectedSpaceId ?? undefined,
+                tag_id: selectedTagId ?? undefined,
+              },
               signal,
             ),
           )
@@ -432,7 +533,7 @@ export function DiscoveryLibrary() {
         setError(caught instanceof ApiError ? caught.message : 'Could not load your library.')
       }
     },
-    [archived, favourite, platform, q, selectedSpaceId],
+    [archived, favourite, platform, q, selectedSpaceId, selectedTagId],
   )
 
   useEffect(() => {
@@ -440,6 +541,12 @@ export function DiscoveryLibrary() {
     void loadSpaces(controller.signal)
     return () => controller.abort()
   }, [loadSpaces])
+
+  useEffect(() => {
+    const controller = new AbortController()
+    void loadTags(controller.signal)
+    return () => controller.abort()
+  }, [loadTags])
 
   useEffect(() => {
     const controller = new AbortController()
@@ -460,8 +567,55 @@ export function DiscoveryLibrary() {
     }
   }
 
-  const hasFilters = Boolean(q || platform || archived || favourite)
+  const hasFilters = Boolean(q || platform || archived || favourite || selectedTagId)
   const selectedSpace = spaces.find((space) => space.id === selectedSpaceId) ?? null
+  const selectedTag = tags.find((tag) => tag.id === selectedTagId) ?? null
+
+  async function saveTag(name: string) {
+    if (tagDialog === 'rename' && editingTag) {
+      await tagApi.updateTag(editingTag.id, name)
+      setFeedback('Tag renamed.')
+    } else {
+      await tagApi.createTag(name)
+      setFeedback('Tag created.')
+    }
+    setTagDialog(null)
+    setEditingTag(null)
+    await loadTags()
+    await load()
+  }
+
+  async function confirmDeleteTag() {
+    if (!editingTag) return
+    try {
+      await tagApi.deleteTag(editingTag.id)
+      if (selectedTagId === editingTag.id) setSelectedTagId(null)
+      setFeedback('Tag deleted. Your Discoveries remain in your library.')
+      setTagDialog(null)
+      setEditingTag(null)
+      await loadTags()
+      await load()
+    } catch (caught) {
+      setError(caught instanceof ApiError ? caught.message : 'Could not delete this Tag.')
+    }
+  }
+
+  async function toggleTag(tag: Tag, discovery: Discovery, assigned: boolean) {
+    const key = `${tag.id}:${discovery.id}`
+    setTagMembershipBusy(key)
+    try {
+      if (assigned) await tagApi.detachTagFromDiscovery(tag.id, discovery.id)
+      else await tagApi.attachTagToDiscovery(tag.id, discovery.id)
+      setFeedback(assigned ? `Removed ${tag.name}.` : `Added ${tag.name}.`)
+      await loadTags()
+      await load()
+    } catch (caught) {
+      setError(caught instanceof ApiError ? caught.message : 'Could not update Tags.')
+      await load()
+    } finally {
+      setTagMembershipBusy(null)
+    }
+  }
 
   async function saveSpace(input: spaceApi.SpaceInput) {
     if (spaceDialog === 'rename' && editingSpace) {
@@ -555,12 +709,54 @@ export function DiscoveryLibrary() {
             </button>
           ))}
         </nav>
+        <div className="tags-sidebar" aria-labelledby="tags-title">
+          <div className="spaces-sidebar__heading">
+            <h2 id="tags-title">Tags</h2>
+            <button className="text-button" onClick={() => setTagDialog('create')}>
+              Create Tag
+            </button>
+          </div>
+          <label className="tag-search">
+            Search Tags
+            <input
+              aria-label="Search Tags"
+              value={tagSearch}
+              onChange={(event) => setTagSearch(event.target.value)}
+            />
+          </label>
+          {tagsLoading && <span className="spaces-loading">Loading Tags…</span>}
+          {!tagsLoading && tags.length === 0 && (
+            <p className="sidebar-empty">No Tags yet. Tags describe subjects across Spaces.</p>
+          )}
+          <nav aria-label="Tag filters">
+            {tags
+              .filter((tag) =>
+                tag.name.toLocaleLowerCase().includes(tagSearch.trim().toLocaleLowerCase()),
+              )
+              .map((tag) => (
+                <button
+                  className={selectedTagId === tag.id ? 'active' : ''}
+                  key={tag.id}
+                  title={tag.name}
+                  onClick={() => setSelectedTagId(tag.id)}
+                >
+                  <span>{tag.name}</span>
+                  <span aria-label={`${tag.discovery_count} Discoveries`}>
+                    {tag.discovery_count}
+                  </span>
+                </button>
+              ))}
+          </nav>
+        </div>
       </aside>
       <div className="library" aria-labelledby="library-title">
         <div className="library-heading">
           <div>
             <p className="eyebrow">Private library</p>
-            <h1 id="library-title">{selectedSpace?.name ?? 'Your Discoveries'}</h1>
+            <h1 id="library-title">
+              {selectedSpace?.name ?? 'Your Discoveries'}
+              {selectedTag ? ` · ${selectedTag.name}` : ''}
+            </h1>
             {selectedSpace?.description && <p>{selectedSpace.description}</p>}
           </div>
           <div className="library-heading__actions">
@@ -583,6 +779,31 @@ export function DiscoveryLibrary() {
                   }}
                 >
                   Delete Space
+                </button>
+              </>
+            )}
+            {selectedTag && (
+              <>
+                <button className="button button--quiet" onClick={() => setSelectedTagId(null)}>
+                  Clear Tag filter
+                </button>
+                <button
+                  className="button button--quiet"
+                  onClick={() => {
+                    setEditingTag(selectedTag)
+                    setTagDialog('rename')
+                  }}
+                >
+                  Rename Tag
+                </button>
+                <button
+                  className="button button--danger"
+                  onClick={() => {
+                    setEditingTag(selectedTag)
+                    setTagDialog('delete')
+                  }}
+                >
+                  Delete Tag
                 </button>
               </>
             )}
@@ -636,6 +857,7 @@ export function DiscoveryLibrary() {
                 setPlatform('')
                 setArchived(false)
                 setFavourite(false)
+                setSelectedTagId(null)
               }}
             >
               Clear filters
@@ -657,22 +879,31 @@ export function DiscoveryLibrary() {
           <div className="empty-library">
             <p className="eyebrow">A fresh start</p>
             <h2>
-              {selectedSpace && !hasFilters
-                ? 'No discoveries in this space.'
-                : hasFilters
-                  ? 'No Discoveries match.'
-                  : 'Keep what matters.'}
+              {selectedTag
+                ? 'No discoveries with this Tag.'
+                : selectedSpace && !hasFilters
+                  ? 'No discoveries in this space.'
+                  : hasFilters
+                    ? 'No Discoveries match.'
+                    : 'Keep what matters.'}
             </h2>
             <p>
-              {selectedSpace && !hasFilters
-                ? 'Add Discoveries from their card’s Spaces menu. Nothing has been deleted.'
-                : hasFilters
-                  ? 'Try clearing or changing your filters.'
-                  : 'Save useful, entertaining, or inspiring URLs with the context you want to remember.'}
+              {selectedTag
+                ? 'Clear the Tag filter or change your other filters.'
+                : selectedSpace && !hasFilters
+                  ? 'Add Discoveries from their card’s Spaces menu. Nothing has been deleted.'
+                  : hasFilters
+                    ? 'Try clearing or changing your filters.'
+                    : 'Save useful, entertaining, or inspiring URLs with the context you want to remember.'}
             </p>
             {!hasFilters && (
               <button className="button button--primary" onClick={() => setShowSave(true)}>
                 Save your first Discovery
+              </button>
+            )}
+            {selectedTag && (
+              <button className="button button--quiet" onClick={() => setSelectedTagId(null)}>
+                Clear Tag filter
               </button>
             )}
           </div>
@@ -760,6 +991,20 @@ export function DiscoveryLibrary() {
               <AiSummaryPanel discovery={discovery} />
               {discovery.personal_note && <p className="note-preview">{discovery.personal_note}</p>}
               {discovery.save_reason && <p className="save-reason">Why: {discovery.save_reason}</p>}
+              {discovery.tags?.length > 0 && (
+                <div className="tag-chips" aria-label="Tags">
+                  {discovery.tags.slice(0, 3).map((tag) => (
+                    <button key={tag.id} title={tag.name} onClick={() => setSelectedTagId(tag.id)}>
+                      {tag.name}
+                    </button>
+                  ))}
+                  {discovery.tags.length > 3 && (
+                    <span aria-label={`${discovery.tags.length - 3} more Tags`}>
+                      +{discovery.tags.length - 3}
+                    </span>
+                  )}
+                </div>
+              )}
               {spaces.some((space) => memberships[space.id]?.has(discovery.id)) && (
                 <p className="space-badges">
                   Spaces:{' '}
@@ -786,6 +1031,33 @@ export function DiscoveryLibrary() {
                           onChange={() => void toggleMembership(space, discovery, assigned)}
                         />
                         {space.name}
+                      </label>
+                    )
+                  })
+                )}
+              </details>
+              <details className="space-picker tag-picker">
+                <summary>Add or remove Tags</summary>
+                {tags.length === 0 ? (
+                  <p>
+                    No Tags yet.{' '}
+                    <button className="text-button" onClick={() => setTagDialog('create')}>
+                      Create a Tag
+                    </button>
+                  </p>
+                ) : (
+                  tags.map((tag) => {
+                    const assigned = discovery.tags?.some((item) => item.id === tag.id) ?? false
+                    const busy = tagMembershipBusy === `${tag.id}:${discovery.id}`
+                    return (
+                      <label key={tag.id} title={tag.name}>
+                        <input
+                          type="checkbox"
+                          checked={assigned}
+                          disabled={busy || (!assigned && discovery.tags.length >= 20)}
+                          onChange={() => void toggleTag(tag, discovery, assigned)}
+                        />
+                        {tag.name}
                       </label>
                     )
                   })
@@ -918,6 +1190,44 @@ export function DiscoveryLibrary() {
                 </button>
                 <button className="button button--danger" onClick={() => void confirmDeleteSpace()}>
                   Delete Space
+                </button>
+              </div>
+            </section>
+          </div>
+        )}
+        {tagDialog === 'create' && (
+          <TagForm title="Create Tag" onSubmit={saveTag} onCancel={() => setTagDialog(null)} />
+        )}
+        {tagDialog === 'rename' && editingTag && (
+          <TagForm
+            title="Rename Tag"
+            initial={editingTag}
+            onSubmit={saveTag}
+            onCancel={() => {
+              setTagDialog(null)
+              setEditingTag(null)
+            }}
+          />
+        )}
+        {tagDialog === 'delete' && editingTag && (
+          <div className="dialog-backdrop" role="presentation">
+            <section
+              className="dialog"
+              role="alertdialog"
+              aria-modal="true"
+              aria-labelledby="delete-tag-title"
+            >
+              <h2 id="delete-tag-title">Delete {editingTag.name}?</h2>
+              <p>
+                The Tag will be permanently deleted. Discoveries will not be deleted. The Tag will
+                be removed from attached Discoveries.
+              </p>
+              <div className="form-actions">
+                <button className="button button--quiet" onClick={() => setTagDialog(null)}>
+                  Cancel
+                </button>
+                <button className="button button--danger" onClick={() => void confirmDeleteTag()}>
+                  Delete Tag
                 </button>
               </div>
             </section>

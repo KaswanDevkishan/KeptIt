@@ -54,6 +54,7 @@ class PublicDiscovery(BaseModel):
     metadata_record: "PublicMetadata | None" = Field(
         default=None, validation_alias="metadata_record", serialization_alias="metadata"
     )
+    tags: list["TagSummary"] = Field(default_factory=list)
 
     @computed_field  # type: ignore[prop-decorator]
     @property
@@ -90,3 +91,6 @@ class DiscoveryList(BaseModel):
     total: int
     limit: int
     offset: int
+
+
+from app.schemas.tag import TagSummary  # noqa: E402

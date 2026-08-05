@@ -128,7 +128,7 @@ implementation.
 
 **Discovery MVP status:** The responsive authenticated library, save/edit dialogs, empty state,
 keyword/platform/archive/favourite filters, feedback, and destructive confirmation are complete.
-Space filtering and membership controls are implemented. Tag filtering remains postponed.
+Space and one-Tag filtering and membership controls are implemented.
 
 ## Phase 5 — Safe metadata enrichment
 

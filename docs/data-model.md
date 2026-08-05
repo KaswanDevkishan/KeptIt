@@ -74,7 +74,7 @@ per feature; **next planned phase** identifies approved design that has not been
 The complete normative schema, API, behavior, security, migration, UX, and test design is in the
 [Spaces feature implementation plan](spaces-implementation-plan.md).
 
-### Tag (`tags`) — next planned phase
+### Tag (`tags`) — implemented
 
 - **Purpose:** Lightweight user-owned descriptors for cross-cutting organization and retrieval.
 - **Important fields:** `id`, `user_id`, `name`, `normalized_name`, `created_at`, `updated_at`.
@@ -84,7 +84,7 @@ The complete normative schema, API, behavior, security, migration, UX, and test 
 - **Indexes:** Unique owner/name plus owner-leading alphabetical listing.
 - **Deletion:** Deleting a Tag deletes assignments, not Discoveries. User deletion cascades.
 
-### DiscoveryTag (`discovery_tags`) — next planned phase
+### DiscoveryTag (`discovery_tags`) — implemented
 
 - **Purpose:** Many-to-many assignment of Tags to Discoveries.
 - **Important fields:** UUID `id`, immutable tenant `user_id`, `tag_id`, `discovery_id`, and

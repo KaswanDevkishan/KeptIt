@@ -25,6 +25,12 @@ uv run alembic upgrade head
 uv run uvicorn app.main:app --reload
 ```
 
+The current head includes Tags revision `20260805_0007`. Existing Discoveries begin untagged.
+For local browser verification, create Unicode-equivalent names, assign several Tags, combine one
+Tag with Space/search/platform/favourite/archive filters, and delete a Tag while confirming its
+Discoveries remain. Tag names and searches are private: do not persist them in browser storage,
+log them, or send them to the AI Summary provider.
+
 The API is available at <http://localhost:8000>, its development documentation at <http://localhost:8000/docs>, and its health endpoint at <http://localhost:8000/api/v1/health>.
 
 The health endpoint reports process health only and deliberately does not query PostgreSQL. This keeps it usable during startup and makes its test independent of a database. Database readiness can be checked separately with `docker compose ps`.

@@ -442,6 +442,55 @@ h1 {
   color: var(--muted);
   font-size: 0.8rem;
 }
+.tags-sidebar {
+  margin-top: 2rem;
+  padding-top: 1.25rem;
+  border-top: 1px solid var(--line);
+}
+.tag-search {
+  display: grid;
+  gap: 0.3rem;
+  color: var(--muted);
+  font-size: 0.75rem;
+}
+.tag-search input {
+  width: 100%;
+  min-height: 2.4rem;
+  padding: 0.5rem 0.65rem;
+  border: 1px solid #a9afa9;
+  border-radius: 0.55rem;
+}
+.sidebar-empty {
+  color: var(--muted);
+  font-size: 0.8rem;
+  line-height: 1.45;
+}
+.tag-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin: 0.7rem 0;
+}
+.tag-chips button,
+.tag-chips span {
+  max-width: 10rem;
+  overflow: hidden;
+  padding: 0.3rem 0.6rem;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: #eef0eb;
+  color: var(--forest);
+  font-size: 0.75rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.tag-chips button {
+  cursor: pointer;
+}
+.tag-picker label {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
 .library-heading {
   display: flex;
   align-items: end;
