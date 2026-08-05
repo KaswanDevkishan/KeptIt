@@ -62,9 +62,10 @@ keptit/
 
 Phase 1 provides the application foundation, health check, database configuration, and a polished landing page. Product features begin in later phases.
 
-The authentication foundation provides registration, login, logout, current-user APIs, and a
-responsive frontend flow with protected application routing. Discovery and library interfaces
-remain scheduled for a later phase.
+The Discovery MVP provides an authenticated private library: users can save validated public
+HTTP(S) URLs, add personal context, search and filter, favourite, edit, archive/restore, and
+permanently delete their own Discoveries. URL identity is normalized conservatively without
+fetching third-party content, and equivalent active or archived URLs are rejected per user.
 
 Password recovery is available through `/forgot-password`. Reset links use short-lived,
 single-use opaque tokens; PostgreSQL stores only each token's SHA-256 digest. A successful reset
@@ -72,6 +73,12 @@ changes the password without signing the user in and revokes every existing sess
 account. Local development writes reset links to the ignored
 `backend/.local/password-reset-outbox.jsonl` file. Production still requires a real email provider
 and IP/account-aware rate limiting.
+
+Discovery endpoints are versioned under `/api/v1/discoveries`: create and list use the collection
+route; get, patch, and delete use `/{discovery_id}`; archive and restore use POST action routes. All
+require the existing session cookie, owner scope, and trusted-origin protection for mutations.
+Platform detection supports Instagram, YouTube, TikTok, Reddit, X/Twitter, GitHub, and
+`generic_web`.
 
 ## Development roadmap
 

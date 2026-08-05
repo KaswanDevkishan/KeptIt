@@ -100,6 +100,29 @@ the authentication revision `20260804_0001`.
 Automated frontend authentication tests mock the HTTP boundary and run with the normal frontend
 test command below; they do not require a running backend.
 
+### Exercise the Discovery library
+
+Apply Discovery revision `20260805_0003` after password recovery:
+
+```bash
+uv run alembic upgrade head
+```
+
+Then sign in at `/app`, save representative URLs, and verify search, platform/favourite/archive
+filters, editing, favourite toggling, archive/restore, and confirmed permanent deletion. Save the
+same URL again with a fragment or tracking parameter to verify the safe duplicate conflict. A
+second account may save the same canonical URL but cannot read or mutate the first account's UUID.
+
+Normalization version 1 lowercases scheme/host, removes default ports and fragments, converts an
+empty path to `/`, removes the explicit `utm_*`, `fbclid`, and `gclid` allowlist, and sorts retained
+query pairs while preserving path case and meaningful values. It rejects non-HTTP(S), credentials,
+malformed/missing hosts, localhost, and literal non-global IP targets. No URL is fetched. Future
+normalization changes must introduce a new version and collision-reporting migration/backfill;
+existing canonical values and original URLs must not be silently overwritten.
+
+This phase deliberately adds no Spaces, Tags, metadata fetching, thumbnails, AI, semantic search,
+Memory Threads, rediscovery, sharing, extensions, or public libraries.
+
 Run frontend checks from `frontend/`:
 
 ```bash

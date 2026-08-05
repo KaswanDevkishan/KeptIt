@@ -78,6 +78,12 @@ backend/
 
 Exact package boundaries should be validated during scaffolding rather than treated as immutable.
 
+The implemented Discovery slice uses `models/discovery.py`, `schemas/discovery.py`, focused
+`services/urls.py` and `services/discoveries.py` modules, and authenticated routes in
+`api/routes/discoveries.py`. The frontend keeps typed transport in `features/discoveries/api.ts`
+and the responsive library workflow beside it. No generic repository abstraction or metadata
+boundary was added for this phase.
+
 ## Proposed frontend modules
 
 ```text
@@ -147,7 +153,8 @@ Normalization is conservative and versioned so it does not incorrectly merge dis
 - Normalize percent encoding and path dot segments without changing resource semantics.
 - Remove only an explicit, tested allowlist of tracking parameters such as common `utm_*` fields.
 - Apply tested platform-specific canonicalization for recognized share and canonical URL forms.
-- Sort query parameters only where ordering is known not to be meaningful.
+- Sort retained query pairs deterministically in normalization version 1; the conservative removal
+  list is limited to common tracking fields, and meaningful names, values, and repeats remain.
 
 Always retain the submitted original URL separately. Do not follow redirects solely to decide identity during the synchronous save because it adds latency, tracking, and SSRF risk.
 
