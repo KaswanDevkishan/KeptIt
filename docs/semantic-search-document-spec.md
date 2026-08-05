@@ -141,3 +141,9 @@ third party reveals its included text, not merely an opaque vector. Provider ret
 regional processing, subprocessors, deletion, and incident terms must be reviewed and disclosed.
 Turning the setting off makes existing private-context embeddings stale and queues replacement;
 until replacement succeeds, those rows must not be searched.
+
+## Portfolio implementation clarification
+
+The portfolio MVP implements only the default policy: personal notes, save reasons, Tags, and
+Spaces are always excluded. The private-context preference and consent/replacement UX are
+postponed; no account setting is inferred.

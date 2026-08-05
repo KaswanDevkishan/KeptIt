@@ -297,3 +297,17 @@ typed fake/OpenAI adapters receive a privacy-minimized metadata envelope; strict
 only normalized output and usage. Read-time SHA-256 fingerprint comparison derives staleness.
 Regeneration preserves the previous success until replacement succeeds, and Discovery deletion
 cascades. The local in-process executor is not a production-durable worker.
+## Semantic Search implementation
+
+Semantic Search is an optional additive backend subsystem. A deterministic document builder feeds
+the fake or explicitly enabled OpenAI adapter; one `discovery_embeddings` row owns the current
+`vector(1536)` and lifecycle state. Authenticated indexing/status/backfill routes remain owner
+scoped through Discovery. PostgreSQL Meaning search uses bounded pgvector `<=>` exact-cosine and
+keyword candidates under the same owner/filter predicates,
+applies the existing relational filters, and fuses them with `semantic-hybrid-v1` RRF. Keyword
+fallback keeps the library usable during disablement or provider outages. Raw queries are not
+persisted and vectors never enter public schemas. The in-process portfolio executor is not
+production durable; real-provider rollout requires a separate lease worker.
+SQLite's in-memory cosine implementation exists only for isolated automated tests. Cursor
+pagination, private-context settings, durable queues, distributed limits, HNSW, monitoring,
+budgets, and alerts are postponed.

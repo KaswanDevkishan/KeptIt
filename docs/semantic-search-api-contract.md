@@ -238,3 +238,11 @@ query, Tag, Space, note, provider text, vector, document, credential, or databas
 Rate limits are per authenticated user plus IP-aware production controls. Provider calls have a
 short configured timeout. Query vectors live only for the request or a private short-lived cache;
 no semantic query or raw query vector is persisted or logged.
+
+## Portfolio implementation clarification
+
+The current portfolio API returns bounded results with `next_cursor: null`; cursor pagination is
+postponed. Fake-provider work and capped owner backfill run inline, so this is not a durable queue.
+Idempotency headers are validated and current/active work is suppressed, while durable historical
+key replay storage is postponed with the worker. Limits are single-process controls; distributed
+user/IP accounting is a production blocker. Keyword fallback remains available.

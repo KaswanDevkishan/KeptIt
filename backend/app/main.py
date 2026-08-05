@@ -7,6 +7,7 @@ from app.api.routes.ai_summaries import router as ai_summaries_router
 from app.api.routes.auth import router as auth_router
 from app.api.routes.discoveries import router as discoveries_router
 from app.api.routes.health import router as health_router
+from app.api.routes.semantic_search import router as semantic_search_router
 from app.api.routes.spaces import router as spaces_router
 from app.api.routes.tags import router as tags_router
 from app.api.routes.users import router as users_router
@@ -58,6 +59,7 @@ def create_app() -> FastAPI:
     application.include_router(ai_summaries_router, prefix=settings.api_v1_prefix)
     application.include_router(spaces_router, prefix=settings.api_v1_prefix)
     application.include_router(tags_router, prefix=settings.api_v1_prefix)
+    application.include_router(semantic_search_router, prefix=settings.api_v1_prefix)
     return application
 
 

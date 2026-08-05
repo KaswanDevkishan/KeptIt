@@ -1,4 +1,4 @@
-import { api } from '../../api/client'
+import { api, apiRequest } from '../../api/client'
 
 export const platforms = [
   'instagram',
@@ -77,6 +77,36 @@ export interface DiscoveryPage {
   offset: number
 }
 
+export type EmbeddingStatusName =
+  | 'unavailable'
+  | 'pending'
+  | 'processing'
+  | 'succeeded'
+  | 'failed'
+  | 'unsupported'
+  | 'stale'
+export interface EmbeddingStatus {
+  status: EmbeddingStatusName
+  is_searchable: boolean
+  generated_at: string | null
+  last_attempted_at: string | null
+  can_index: boolean
+  can_retry: boolean
+  retry_after_seconds: number | null
+  error: { code: string; message: string } | null
+}
+export interface SemanticSearchResponse {
+  items: { discovery: Discovery; relevance: { match_reasons: string[] } }[]
+  next_cursor: string | null
+  search: {
+    effective_mode: string
+    fallback_reason: string | null
+    index_coverage: 'none' | 'partial' | 'complete'
+    indexed_count: number
+    eligible_count: number
+  }
+}
+
 export type SummaryStatus =
   | 'unavailable'
   | 'pending'
@@ -108,6 +138,41 @@ export interface AiSummary {
 
 function idempotencyKey() {
   return `keptit-${crypto.randomUUID()}`
+}
+export function semanticSearch(query: string, filters: DiscoveryFilters, signal?: AbortSignal) {
+  return apiRequest<SemanticSearchResponse>('/api/v1/search/semantic', {
+    method: 'POST',
+    signal,
+    body: {
+      query,
+      mode: 'hybrid',
+      filters: {
+        platform: filters.platform ? [filters.platform] : [],
+        space_id: filters.space_id ?? null,
+        tag_id: filters.tag_id ?? null,
+        is_favourite: filters.favourite ?? null,
+        archive: filters.archived ? 'archived' : 'active',
+      },
+      limit: filters.limit ?? 20,
+    },
+  })
+}
+export function getEmbeddingStatus(id: string, signal?: AbortSignal) {
+  return api.get<EmbeddingStatus>(`/api/v1/discoveries/${id}/embedding/status`, signal)
+}
+export function indexDiscovery(id: string) {
+  return api.postWithHeaders<EmbeddingStatus>(
+    `/api/v1/discoveries/${id}/embedding`,
+    {},
+    { 'Idempotency-Key': idempotencyKey() },
+  )
+}
+export function retryEmbedding(id: string) {
+  return api.postWithHeaders<EmbeddingStatus>(
+    `/api/v1/discoveries/${id}/embedding/retry`,
+    { confirm: true },
+    { 'Idempotency-Key': idempotencyKey() },
+  )
 }
 export function getSummary(id: string, signal?: AbortSignal) {
   return api.get<AiSummary>(`/api/v1/discoveries/${id}/summary`, signal)

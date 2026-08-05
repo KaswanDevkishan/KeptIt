@@ -215,7 +215,12 @@ See the [Tags implementation plan](tags-implementation-plan.md),
 **Goal:** Add optional meaning-based retrieval while preserving keyword search and every existing
 owner-scoped filter.
 
-**Next coding phase deliverables (only):**
+**Implemented portfolio MVP deliverables (disabled by default):**
+
+PostgreSQL/pgvector exact cosine retrieval, hybrid keyword fallback, manual indexing, bounded inline
+backfill, and Meaning-mode UX are implemented for portfolio use. Durable production workers and
+queues, persistent distributed quotas, IP/user rate limiting, cursor pagination, private-context
+preferences, HNSW, monitoring, budgets, and alerting remain postponed production blockers.
 
 - pgvector Alembic migration
 - Separate one-current-row Discovery Embedding table

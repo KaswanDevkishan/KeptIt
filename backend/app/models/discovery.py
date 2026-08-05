@@ -21,6 +21,7 @@ from app.models.user import User, utc_now
 
 if TYPE_CHECKING:
     from app.models.ai_summary import AISummary
+    from app.models.discovery_embedding import DiscoveryEmbedding
     from app.models.space import Space, SpaceMembership
     from app.models.tag import DiscoveryTag, Tag
 
@@ -111,6 +112,12 @@ class Discovery(Base):
         viewonly=True,
         lazy="selectin",
         order_by="(Tag.normalized_name, Tag.id)",
+    )
+    embedding_record: Mapped["DiscoveryEmbedding | None"] = relationship(
+        back_populates="discovery",
+        cascade="all, delete-orphan",
+        uselist=False,
+        passive_deletes=True,
     )
 
 

@@ -3,6 +3,11 @@
 These decisions govern the proposed MVP. “Final” means the first-release contract; “revisitable”
 marks an intentional evidence-based extension point.
 
+Implementation note: revision `20260805_0008` creates `vector(1536)`. PostgreSQL retrieval uses
+exact `<=>` cosine distance under owner and relational-filter predicates. HNSW remains postponed.
+Portfolio execution, quotas, and backfill are process-local/inline; durable accounting and queue
+infrastructure remain production work.
+
 ## SEM-ADR-001 — PostgreSQL plus pgvector
 
 - **Context:** Retrieval is owner-scoped and combined with relational filters.

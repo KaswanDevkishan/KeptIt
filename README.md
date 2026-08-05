@@ -32,9 +32,14 @@ Semantic AI search is not part of the first MVP.
   Notes, save reasons, custom titles, raw URLs, account data, and Spaces are never sent.
 - Suggested tags remain later work and are not part of the AI Summaries phase.
 
-Semantic Search is a separate planned phase, designed around PostgreSQL/pgvector, versioned private
-embedding documents, and additive semantic/keyword hybrid retrieval. It is not implemented and
-does not include chat or generated answers.
+Optional private Semantic Search uses PostgreSQL/pgvector, versioned privacy-reviewed embedding
+documents, manual indexing, bounded owner backfill, and additive semantic/keyword hybrid retrieval.
+The deterministic fake provider needs no key; optional OpenAI embeddings require explicit
+backend-only configuration. Meaning mode never exposes vectors and has no generated answers.
+Real semantic retrieval requires PostgreSQL with pgvector and uses bounded exact cosine search
+before RRF fusion with keyword candidates. In-process indexing/backfill is portfolio-only. Durable
+workers/queues, distributed quotas/rate limits, cursor pagination, private-context preferences,
+HNSW, production monitoring, budgets, and alerts remain postponed.
 
 ## Planned technology stack
 
