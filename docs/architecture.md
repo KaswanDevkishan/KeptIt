@@ -58,6 +58,40 @@ Detailed decisions and schemas are documented in:
 - [MVP schema](mvp-schema.md)
 - [Spaces feature implementation plan](spaces-implementation-plan.md)
 
+## AI Summaries architecture (next phase)
+
+AI Summaries are optional private derived data in a separate one-current-row-per-Discovery table.
+They never overwrite or masquerade as user-authored `custom_title`, `personal_note`, `save_reason`,
+favourite/archive state, Space membership, or externally fetched Metadata Record fields. Discovery
+capture, enrichment, and the rest of the library continue to work when the feature flag is off, no
+provider is configured, or generation fails.
+
+A small typed provider boundary accepts only bounded approved metadata and returns structured
+candidate output plus provider/model/prompt provenance, safe classified errors, and usage where
+available. The first release uses explicit manual generation; a durable database-backed worker
+claims pending rows outside page/save latency before real-provider production use. Local startup
+requires neither an AI key nor a live provider.
+
+The lifecycle is `unavailable` (no row), `pending`, `processing`, then `succeeded`, `failed`,
+`unsupported`, or `insufficient_data`; a successful result is presented as `stale` when its approved
+metadata fingerprint no longer matches. Regeneration is explicit and preserves the previous valid
+output until replacement succeeds.
+
+The privacy-first input policy sends source title/description, site/provider, creator/publisher,
+published date, deterministic platform, and canonical hostname only. It excludes user notes, save
+reason, custom title, email/account/session data, Spaces, raw URLs, internal IDs, logs, and full
+records. A future per-request note opt-in requires separate consent and fingerprints the note as
+subjective context. Metadata is untrusted prompt data, the model has no tools or browsing, and
+strict backend output validation and plain-text escaping remain the security boundary.
+
+Stable summary IDs, source fingerprints, model identifiers, and prompt versions allow a future
+semantic-search phase to reference a specific generated source. No embeddings, vectors, semantic
+search tables, or automatic Tags belong to the AI Summaries schema. See the
+[implementation plan](ai-summaries-implementation-plan.md),
+[database decisions](ai-summaries-database-decisions.md),
+[API contract](ai-summaries-api-contract.md), and
+[prompt specification](ai-summaries-prompt-spec.md).
+
 ## Proposed backend modules
 
 ```text

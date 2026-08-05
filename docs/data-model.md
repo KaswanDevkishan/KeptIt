@@ -114,6 +114,39 @@ The complete normative schema, API, behavior, security, migration, UX, and test 
 - **Indexes:** Unique Discovery lookup; optional `(provider, provider_record_id)` when provider refresh requires it; expiry index for refresh selection.
 - **Deletion:** Cascade with Discovery. Replace or clear data when a source withdraws it or retention/terms require removal. Raw payload storage is discouraged.
 
+### AISummary (`ai_summaries`) — next phase, proposed
+
+- **Purpose:** One current, optional AI-generated understanding of approved Discovery metadata,
+  kept separate from both user-authored fields and externally fetched facts. The upcoming
+  implementation includes concise summary text, key points, topics, supported named entities,
+  language, confidence/insufficiency, lifecycle/failure state, input fingerprint, provider/model/
+  prompt provenance, usage/cost estimates, and bounded database-worker lease state.
+- **Important fields:** `id`, unique `discovery_id`, `status`, `provider`, `model`,
+  `prompt_version`, `summary`, JSONB `key_points`, `topics`, and `entities`, `language`,
+  `confidence`, `insufficiency_reason`, `input_fingerprint`, generation/attempt timestamps, safe
+  failure fields, usage/cost fields, and processing lease/token fields.
+- **Primary key:** UUID.
+- **Foreign keys:** `discovery_id -> discoveries.id ON DELETE CASCADE`. Ownership is reached and
+  enforced through an owner-scoped Discovery query; a client never supplies an owner.
+- **Unique constraints/indexes:** Unique `discovery_id`; partial indexes for pending work and expired
+  processing leases; strict lifecycle/cross-field checks. JSONB structures remain small, typed, and
+  backend-validated.
+- **Lifecycle:** Absence means `unavailable`; stored work moves through `pending`, `processing`, and
+  terminal `succeeded`, `failed`, `unsupported`, or `insufficient_data`. `stale` is derived when the
+  successful row's approved-input fingerprint differs from current metadata. Manual regeneration
+  preserves the old valid output until replacement succeeds.
+- **Privacy/deletion:** The first release excludes custom title, personal note, save reason, account
+  data, Spaces, raw URLs, and operational records from provider input. Generated content never
+  modifies its source fields. Discovery/account deletion cascades the row; raw prompts/provider
+  responses are not retained.
+
+The normative field table and behavior are in the
+[AI Summaries implementation plan](ai-summaries-implementation-plan.md). Embeddings, vector
+columns/indexes, semantic search, automatic Tags, version history, and normalized topic/entity
+tables remain future work and are not part of the upcoming migration. A future embedding table may
+reference the stable summary ID plus a content/version fingerprint after that separate feature is
+designed.
+
 ### EnrichmentJob (`enrichment_jobs`) — near-term
 
 - **Purpose:** Bounded, observable processing for metadata and later derived enrichments without blocking a Discovery save.
@@ -198,7 +231,10 @@ The complete normative schema, API, behavior, security, migration, UX, and test 
 - **Indexes:** `(user_id, status, created_at DESC)` and subject lookups.
 - **Deletion:** Cascade or purge with its source; derived content is private and cannot outlive all grounding sources. Superseded versions have bounded retention.
 
-Embeddings and extracted entities/topics should eventually use purpose-built, versioned records associated with a Discovery or Metadata Record, not columns added now. Their exact schema depends on retrieval and provenance requirements.
+Future embeddings and independently searchable or reusable entity/topic records should use
+purpose-built, versioned tables associated with their source. The upcoming AI Summary's small
+display-only entity/topic arrays remain validated JSONB on `ai_summaries`; they are not Tags and do
+not pre-empt a later normalized knowledge or retrieval design.
 
 ## Operational accountability
 
@@ -217,7 +253,9 @@ Embeddings and extracted entities/topics should eventually use purpose-built, ve
 1. **Authentication sprint:** `users`, then `user_sessions`. Add only the security audit events that have a concrete incident-response requirement; otherwise keep application logs until the audit boundary is agreed.
 2. **Discovery sprint:** `discoveries`, `spaces`, `space_memberships`, `tags`, `discovery_tags`.
 3. **Safe enrichment:** `metadata_records`, then `enrichment_jobs` when asynchronous processing is actually introduced.
-4. **Memory behaviour:** introduce visits and rediscovery records only with their product experiences and retention controls.
-5. **Future intelligence:** introduce connections, Memory Threads, insights, entities/topics, and embeddings only with evaluation criteria, provenance, deletion, and provider-disclosure policies.
+4. **AI Summaries:** add only the proposed one-current-row `ai_summaries` schema and its manual,
+   privacy-first generation lifecycle; do not add embeddings or automatic Tags.
+5. **Memory behaviour:** introduce visits and rediscovery records only with their product experiences and retention controls.
+6. **Future intelligence:** introduce connections, Memory Threads, insights, normalized entity/topic records, and embeddings only with evaluation criteria, provenance, deletion, and provider-disclosure policies.
 
 This sequence preserves clean expansion points without making empty future tables part of the MVP.
