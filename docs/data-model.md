@@ -158,6 +158,32 @@ tables remain future work and are not part of the upcoming migration. A future e
 reference the stable summary ID plus a content/version fingerprint after that separate feature is
 designed.
 
+### DiscoveryEmbedding (`discovery_embeddings`) — next planned phase, proposed
+
+- **Purpose:** One current optional semantic-search representation for a Discovery, stored
+  separately from user-authored, fetched, and AI Summary data.
+- **Important fields:** `id`, unique `discovery_id`, `provider`, `model`,
+  `embedding_dimension`, `document_version`, `input_fingerprint`, pgvector `embedding`, `status`,
+  generated/attempt timestamps, safe failure fields, usage/cost estimates, retry/backoff fields,
+  and processing lease/token fields.
+- **Primary key:** UUID.
+- **Foreign keys:** `discovery_id -> discoveries.id ON DELETE CASCADE`. Ownership is inherited
+  through an owner-scoped Discovery join; clients never supply an owner.
+- **Unique constraints/indexes:** Unique `discovery_id`; exact-search-first relational indexes and
+  partial queue/expired-lease indexes. A provider/model/status partial HNSW index is future and
+  requires measured need.
+- **Lifecycle:** Absence is `unavailable`; stored work moves through `pending`, `processing`, and
+  `succeeded`, `failed`, or `unsupported`. `stale` is derived/stored when the current versioned
+  document fingerprint or configured provider/model/dimension changes. Stale vectors are not
+  searched.
+- **Privacy/deletion:** The default document excludes notes, save reasons, Tags, and Spaces unless
+  the user explicitly enables private context. Raw URLs, account data, query text, and raw vectors
+  are never exposed. Discovery/account deletion cascades; no cross-user embedding cache exists.
+
+The normative proposed design is in the
+[Semantic Search implementation plan](semantic-search-implementation-plan.md). It is documentation
+only: no table, extension, provider, indexing, or search behavior is implemented yet.
+
 ### EnrichmentJob (`enrichment_jobs`) — near-term
 
 - **Purpose:** Bounded, observable processing for metadata and later derived enrichments without blocking a Discovery save.
@@ -268,7 +294,9 @@ not pre-empt a later normalized knowledge or retrieval design.
    privacy-first generation lifecycle; do not add embeddings or automatic Tags.
 5. **Tags:** add `tags` and `discovery_tags` with owner enforcement, assignment, and one-Tag
    filtering; add no automatic suggestions or semantic behavior.
-6. **Memory behaviour:** introduce visits and rediscovery records only with their product experiences and retention controls.
-7. **Future intelligence:** introduce connections, Memory Threads, insights, normalized entity/topic records, and embeddings only with evaluation criteria, provenance, deletion, and provider-disclosure policies.
+6. **Semantic Search:** add pgvector and `discovery_embeddings` only with the approved document,
+   consent, provider, lifecycle, exact/hybrid retrieval, cost, deletion, and evaluation contracts.
+7. **Memory behaviour:** introduce visits and rediscovery records only with their product experiences and retention controls.
+8. **Future intelligence:** introduce connections, Memory Threads, insights, and normalized entity/topic records only with evaluation criteria, provenance, deletion, and provider-disclosure policies.
 
 This sequence preserves clean expansion points without making empty future tables part of the MVP.

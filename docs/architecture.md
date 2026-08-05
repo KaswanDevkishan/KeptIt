@@ -247,11 +247,33 @@ Use structured logs with timestamp, severity, environment, service, request ID, 
 
 Tests should use isolated databases and deterministic provider fakes; they must not depend on live social platforms.
 
-## Future semantic-search architecture
+## Semantic Search architecture (next planned phase)
 
-After the MVP is stable, a background pipeline can build a permitted text representation from Discovery titles, descriptions, notes, summaries, tags, and other approved fields. It chunks where useful, creates embeddings through a replaceable provider interface, and stores model/version metadata alongside vectors in PostgreSQL with pgvector. Updates and deletion enqueue re-indexing or vector removal.
+Semantic Search is optional and additive. A versioned document builder creates one bounded text
+representation per Discovery from an explicit privacy allowlist. Custom title, approved metadata,
+platform/hostname, and available AI Summary content are included by default; personal notes, save
+reasons, Tags, and Spaces require the explicit private-context setting. Raw URLs and account data
+are excluded. A small replaceable embedding-provider boundary has a deterministic offline fake and
+at most one optional real adapter; provider keys stay backend-only.
 
-Search can combine PostgreSQL full-text ranking with vector similarity, apply user ownership and filters before returning results, and fuse rankings in the service layer. “Ask my library” responses must be grounded only in the authenticated user's retrieved Discoveries, link to sources, tolerate missing source content, and disclose AI processing. Derived data follows the same deletion and privacy rules as its source.
+`discovery_embeddings` is a separate one-current-row dependent table in PostgreSQL using pgvector.
+Its provider/model/dimension, document version, input fingerprint, vector, lifecycle, usage/cost,
+and lease state support `pending`, `processing`, `succeeded`, `failed`, `unsupported`, and derived
+`stale` behavior. Discovery/account deletion cascades vectors. Discovery saving never waits for an
+embedding call. Manual indexing and bounded user backfill are first-release triggers; a separately
+deployed database-backed lease worker is required before real-provider production use.
+
+Retrieval starts with exact cosine search over only current embeddings joined to Discoveries owned
+by the authenticated user and constrained by Space, Tag, platform, favourite, and archive filters.
+Hybrid mode fuses bounded semantic and existing keyword rankings, boosts exact titles, and keeps
+unembedded Discoveries keyword-discoverable. Keyword search remains available when Semantic Search
+is disabled, unavailable, or has no confident match. HNSW is postponed until measured exact-search
+latency and scale justify approximate retrieval; no external vector database, raw-vector API, chat,
+or RAG answer generation is part of this phase. See the
+[implementation plan](semantic-search-implementation-plan.md),
+[database decisions](semantic-search-database-decisions.md),
+[API contract](semantic-search-api-contract.md), and
+[document specification](semantic-search-document-spec.md).
 
 ## Security considerations
 

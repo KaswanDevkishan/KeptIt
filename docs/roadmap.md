@@ -210,27 +210,46 @@ See the [AI Summaries implementation plan](ai-summaries-implementation-plan.md).
 See the [Tags implementation plan](tags-implementation-plan.md),
 [database decisions](tags-database-decisions.md), and [API contract](tags-api-contract.md).
 
-## Phase 8 — Semantic search and memory intelligence
+## Phase 8 — Private Semantic Search
 
-**Goal:** Add private memory behaviour and grounded intelligence after the non-AI product is stable.
+**Goal:** Add optional meaning-based retrieval while preserving keyword search and every existing
+owner-scoped filter.
 
-**Deliverables:**
+**Next coding phase deliverables (only):**
 
-- Carefully scoped revisit history and rediscovery feedback
-- Discovery connections and Memory Threads backed by explainable relational records
-- Optional automatic Tag suggestions only after a separate consent and taxonomy design
-- Versioned embedding pipeline and pgvector storage
-- Semantic search
-- Hybrid keyword and semantic ranking
-- An “ask my library” experience grounded in owned Discoveries
+- pgvector Alembic migration
+- Separate one-current-row Discovery Embedding table
+- Deterministic fake embedding provider
+- One optional real embedding provider
+- Versioned privacy-reviewed embedding document construction
+- Owner-scoped indexing, retry, status, and bounded backfill endpoints
+- Owner-scoped semantic/hybrid search endpoint composed with existing filters and keyword fallback
+- Responsive accessible frontend search mode, privacy disclosure, and indexing progress UX
+- Feature/provider flags, quotas, usage/cost tracking, budgets, and kill switch
+- Backend, frontend, migration, authorization, concurrency, relevance, privacy, and regression tests
+- Semantic Search implementation, database-decision, API, document, operations, and rollout documentation
 
 **Completion criteria:**
 
-- AI features are opt-in or clearly disclosed, with documented provider and data handling.
-- Indexing is repeatable, versioned, observable, and updated or removed with source data.
-- Authorization filters prevent any cross-user retrieval before ranking or generation.
-- Evaluation fixtures demonstrate useful gains over keyword-only search for agreed queries.
-- The product degrades safely when AI services are unavailable and never fabricates saved sources.
+- Every result belongs to the authenticated User; raw vectors never leave the backend; provider
+  keys remain server-only; Discovery/account deletion cascades embeddings.
+- The default document policy excludes notes, save reasons, Tags, and Spaces unless explicit
+  private-context consent is enabled; input fingerprints and model/dimension changes drive staleness.
+- Exact cosine search is proven before HNSW is considered, and no separate vector database is
+  introduced without measured need.
+- Hybrid retrieval preserves keyword-only Discoveries and Space, Tag, platform, favourite, and
+  archive filters, with a clear keyword fallback on disablement/outage/no confident semantic match.
+- Indexing never blocks Discovery creation; fake/local behavior needs no key; real-provider
+  production waits for a durable worker, distributed rate limits, privacy approval, and budgets.
+- All new and existing applicable tests pass and representative relevance fixtures demonstrate a
+  useful gain without unacceptable exact-title regression.
+
+Chat/RAG answers, Memory Threads, rediscovery, recommendations, sharing, automatic Tags/Spaces,
+browser extensions, public search, and non-text embeddings are explicitly outside this phase. See
+the [Semantic Search implementation plan](semantic-search-implementation-plan.md),
+[database decisions](semantic-search-database-decisions.md),
+[API contract](semantic-search-api-contract.md), and
+[document specification](semantic-search-document-spec.md).
 
 ## Phase 9 — Capture and portability
 
