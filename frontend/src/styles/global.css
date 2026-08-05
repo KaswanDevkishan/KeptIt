@@ -753,3 +753,26 @@ h1 {
     width: 100%;
   }
 }
+.ai-summary {
+  border: 1px solid var(--border, #d9d5cc);
+  border-radius: 0.75rem;
+  padding: 0.9rem;
+  margin: 0.8rem 0;
+  background: #f7f6ff;
+}
+.ai-summary__heading,
+.ai-summary__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+  justify-content: space-between;
+  align-items: center;
+}
+.ai-summary__heading span {
+  font-size: 0.8rem;
+  color: #7a4b00;
+}
+.ai-summary button:focus-visible {
+  outline: 3px solid #6558d3;
+  outline-offset: 2px;
+}

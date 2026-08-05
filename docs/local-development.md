@@ -187,3 +187,24 @@ docker compose down
 ```
 
 This preserves the database volume. Use `docker compose down --volumes` only when you intentionally want to delete all local PostgreSQL data.
+# Optional AI Summaries MVP
+
+Apply Alembic revision `20260805_0006`, then set `AI_SUMMARIES_ENABLED=true` and
+`AI_SUMMARY_PROVIDER=fake` for deterministic, network-free manual generation. The fake behavior
+setting supports success, insufficient data, failure, timeout, rate limiting, unavailable,
+unsupported, and malformed-output simulations. OpenAI also requires
+`AI_REAL_PROVIDER_ENABLED=true` and a server-only `OPENAI_API_KEY`; no frontend AI configuration is
+needed. All quota, concurrency, cooldown, retry, timeout, token, and cost-rate settings are listed
+in `backend/.env.example`; blank rates produce a null cost estimate.
+
+Only source metadata title, description, site, publisher, published date, platform, and canonical
+hostname are provider inputs. Notes, save reasons, custom titles, raw URLs, identifiers, sessions,
+and Spaces are excluded. Static higher-priority instructions treat metadata as untrusted and forbid
+browsing, tools, link following, unsupported claims, sensitive-attribute inference, and unnecessary
+copying. Summary deletion is available as a privacy control.
+
+The portfolio executor is an in-process background task backed by lifecycle/claim fields. A process
+restart can interrupt it. A separately deployed lease-polling worker, distributed abuse controls,
+monitoring, provider privacy review, user disclosure approval, and budgets remain production
+blockers. Semantic search, embeddings, Tags, Memory Threads, rediscovery, sharing, OCR,
+transcription, downloads, and public summaries are explicit non-goals.

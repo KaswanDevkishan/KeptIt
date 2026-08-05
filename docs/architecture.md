@@ -247,3 +247,10 @@ Search can combine PostgreSQL full-text ranking with vector similarity, apply us
 ## Deployment overview
 
 The likely initial deployment uses a managed platform such as Render for separate frontend/static, API, and PostgreSQL services. Configuration comes from environment variables and managed secrets. Deployments should run migrations as a controlled release step, expose a lightweight health endpoint, terminate TLS, and keep the API stateless. Production readiness requires CI gates, restricted network access, monitoring, alerting, database backups with restore tests, rollback procedures, and separately scalable worker infrastructure if asynchronous enrichment is introduced.
+# AI Summaries implementation note
+
+AI Summaries are an optional derived subsystem. Owner-scoped routes durably record current work;
+typed fake/OpenAI adapters receive a privacy-minimized metadata envelope; strict validation stores
+only normalized output and usage. Read-time SHA-256 fingerprint comparison derives staleness.
+Regeneration preserves the previous success until replacement succeeds, and Discovery deletion
+cascades. The local in-process executor is not a production-durable worker.
