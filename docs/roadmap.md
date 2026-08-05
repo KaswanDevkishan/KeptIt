@@ -83,6 +83,11 @@ Each phase should remain deployable and reviewable. A phase is complete only whe
 - Archive remains reversible, permanent deletion cascades dependent private data, and archived Discoveries still prevent duplicates.
 - Cross-user authorization and backend persistence/API tests pass for Discoveries, Spaces, and tags.
 
+**Discovery MVP status:** The private Discovery capture, retrieval, search/filter, edit,
+favourite, archive/restore, and delete slice is implemented by revision `20260805_0003`. Spaces and
+Tags remain intentionally postponed under the narrower Discovery MVP scope; no organization or
+future-feature tables were created.
+
 ## Phase 4 — Library retrieval and interface
 
 **Goal:** Make the Discovery library useful and accessible across supported web viewports.
@@ -99,6 +104,10 @@ Each phase should remain deployable and reviewable. A phase is complete only whe
 - Core authentication, saving, organization, search, edit, archive, and delete journeys work on defined mobile and desktop viewports.
 - Search and filters return stable, paginated, owner-scoped results.
 - Critical frontend/backend workflow and accessibility tests pass.
+
+**Discovery MVP status:** The responsive authenticated library, save/edit dialogs, empty state,
+keyword/platform/archive/favourite filters, feedback, and destructive confirmation are complete.
+Space and Tag filtering remain postponed.
 
 ## Phase 5 — Safe metadata enrichment
 

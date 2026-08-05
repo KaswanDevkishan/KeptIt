@@ -1,6 +1,6 @@
 import { API_BASE_URL } from './config'
 
-type Method = 'GET' | 'POST'
+type Method = 'GET' | 'POST' | 'PATCH' | 'DELETE'
 
 interface RequestOptions {
   method?: Method
@@ -34,6 +34,8 @@ function safeError(response: Response, value: unknown): ApiError {
     validation_error: 'Please check the information you entered.',
     csrf_rejected: 'This request could not be verified. Please refresh and try again.',
     invalid_password_reset: 'This password reset link is invalid or has expired.',
+    invalid_url: 'Enter a valid public HTTP or HTTPS URL.',
+    duplicate_discovery: 'This Discovery is already in your library.',
   }
 
   return new ApiError(
@@ -83,4 +85,6 @@ export async function apiRequest<T>(path: string, options: RequestOptions = {}):
 export const api = {
   get: <T>(path: string, signal?: AbortSignal) => apiRequest<T>(path, { signal }),
   post: <T>(path: string, body?: unknown) => apiRequest<T>(path, { method: 'POST', body }),
+  patch: <T>(path: string, body: unknown) => apiRequest<T>(path, { method: 'PATCH', body }),
+  delete: (path: string) => apiRequest<void>(path, { method: 'DELETE' }),
 }
