@@ -31,11 +31,10 @@ Semantic AI search is not part of the first MVP.
   The offline fake requires no key; the OpenAI adapter requires explicit server-only configuration.
   Notes, save reasons, custom titles, raw URLs, account data, and Spaces are never sent.
 - Suggested tags remain later work and are not part of the AI Summaries phase.
-- Embeddings stored with PostgreSQL and pgvector
-- Natural-language semantic and hybrid search
-- An “ask my library” experience grounded in a user's Discoveries
 
-Examples include finding “the Japanese abandoned town video” or “the tofu recipe I saved last month” without remembering an exact title.
+Semantic Search is a separate planned phase, designed around PostgreSQL/pgvector, versioned private
+embedding documents, and additive semantic/keyword hybrid retrieval. It is not implemented and
+does not include chat or generated answers.
 
 ## Planned technology stack
 
@@ -106,10 +105,11 @@ unsupported rather than scraped. KeptIt never downloads platform videos.
 Development began with product and architecture decisions, followed by application scaffolding,
 authentication, the core Discovery experience, safe metadata enrichment, Spaces, and optional
 manual AI Summaries. Private, user-controlled Tags with relational assignments and one-Tag library
-filtering are implemented. Automatic Tags,
-AI suggestions, semantic search, and embeddings remain later, separate work. See
+filtering are implemented. Automatic Tags and AI suggestions remain later, separate work. Semantic
+Search and embeddings now have a documentation-only next-phase design but are not implemented. See
 [docs/roadmap.md](docs/roadmap.md), the [Tags implementation plan](docs/tags-implementation-plan.md),
-and the [AI Summaries implementation plan](docs/ai-summaries-implementation-plan.md).
+the [AI Summaries implementation plan](docs/ai-summaries-implementation-plan.md), and the
+[Semantic Search implementation plan](docs/semantic-search-implementation-plan.md).
 
 ## Privacy principles
 
@@ -208,4 +208,8 @@ Coming soon. The initial production target is Render or another suitable managed
 - [Tags implementation plan](docs/tags-implementation-plan.md)
 - [Tags database decisions](docs/tags-database-decisions.md)
 - [Tags API contract](docs/tags-api-contract.md)
+- [Semantic Search implementation plan](docs/semantic-search-implementation-plan.md)
+- [Semantic Search database decisions](docs/semantic-search-database-decisions.md)
+- [Semantic Search API contract](docs/semantic-search-api-contract.md)
+- [Semantic Search document specification](docs/semantic-search-document-spec.md)
 - [Coding-agent guidance](AGENTS.md)

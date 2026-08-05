@@ -24,6 +24,7 @@ erDiagram
     TAG ||--o{ DISCOVERY_TAG : describes
 
     DISCOVERY ||--o| METADATA_RECORD : has_current
+    DISCOVERY ||--o| DISCOVERY_EMBEDDING : has_search_representation
     DISCOVERY ||--o{ ENRICHMENT_JOB : processed_by
     DISCOVERY ||--o{ DISCOVERY_VISIT : revisited_by
     DISCOVERY ||--o{ DISCOVERY_INTENT : has
@@ -106,6 +107,18 @@ erDiagram
         text description
         text provider
         timestamptz fetched_at
+    }
+    DISCOVERY_EMBEDDING {
+        uuid id PK
+        uuid discovery_id FK, UK
+        text provider
+        text model
+        integer embedding_dimension
+        text document_version
+        bytea input_fingerprint
+        vector embedding
+        text status
+        timestamptz generated_at
     }
     ENRICHMENT_JOB {
         uuid id PK
@@ -254,6 +267,9 @@ erDiagram
 - Discoveries and Tags are many-to-many through Discovery Tag. A Tag can exist before it is
   assigned; each join has its own UUID identity and immutable owner key.
 - A Discovery has zero or one current Metadata Record. It can have many Enrichment Jobs, Visits, Intents, Rediscovery Events, and connections.
+- A Discovery has zero or one proposed current Discovery Embedding. It inherits ownership through
+  Discovery, is searchable only for the active provider/model/dimension and current fingerprint,
+  and cascades on Discovery deletion.
 - A Discovery Connection has exactly one source and target Discovery. Both must belong to the connection's User and must differ.
 - Discoveries and Memory Threads are many-to-many. An inferred membership can include a score and explanation; neither parent owns the other.
 - A Rediscovery Event presents exactly one Discovery and may be associated with one Memory Thread. It receives at most one current feedback record under the proposed design.
@@ -277,7 +293,7 @@ Authentication establishes the current User. Authorization separately scopes acc
 | --- | --- |
 | Delete User after any account grace period | Revoke/delete Sessions; cascade all owned product and derived data; anonymize or separately expire allowed Audit Events |
 | Archive Discovery | Set `archived_at`; preserve all relationships and include it in duplicate detection |
-| Permanently delete Discovery | Cascade memberships, tags joins, metadata, jobs, visits, connections, thread memberships, rediscovery records, and grounded derived data |
+| Permanently delete Discovery | Cascade memberships, tags joins, metadata, embedding, jobs, visits, connections, thread memberships, rediscovery records, and grounded derived data |
 | Delete Space | Cascade Space Memberships only; preserve Discoveries |
 | Delete Tag | Cascade Discovery Tags only; preserve Discoveries |
 | Delete Memory Thread | Cascade memberships and thread-only derived records; preserve Discoveries |
@@ -292,11 +308,14 @@ The MVP keeps stable identities, ownership, URLs, personal context, and organiza
 2. Add `enrichment_jobs` when asynchronous work exists. Discovery creation remains independent of job success.
 3. Add visits and structured intents while retaining `save_reason`; migrate to structured intent only after product validation, and keep the original text.
 4. Add connections and Memory Threads as edge/membership tables referencing existing Discovery UUIDs.
-5. Add rediscovery, Insight, entity/topic, and embedding tables with explicit provenance and versioning. No vector column needs to be added to Discovery.
-6. If canonicalization improves, write a new normalization version and run a collision-reporting backfill before changing uniqueness. Never overwrite `original_url`.
+5. Add the proposed one-current-row Discovery Embedding table for the separately approved Semantic
+   Search phase. No vector column is added to Discovery, and the current/MVP-only diagram remains
+   unchanged.
+6. Add rediscovery, Insight, and entity/topic tables with explicit provenance and versioning.
+7. If canonicalization improves, write a new normalization version and run a collision-reporting backfill before changing uniqueness. Never overwrite `original_url`.
 
-The MVP/current-growth diagram includes Tags because they are the next approved relational growth
-phase, not because the tables already exist. User Tags remain authored organization; future
-automatic suggestions are separate inferred data and are absent from both diagrams.
+The MVP/current diagram includes implemented Tags and keeps the proposed Discovery Embedding only
+in the evolutionary/future diagram. User Tags remain authored organization; future automatic
+suggestions are separate inferred data and are absent from both diagrams.
 
 This path avoids splitting a monolithic Discovery later because fetched and inferred data are separate from the beginning conceptually, while avoiding empty future tables operationally.
