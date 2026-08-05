@@ -27,7 +27,10 @@ Semantic AI search is not part of the first MVP.
 
 ## Future AI features
 
-- AI-assisted summaries and suggested tags
+- Optional, source-grounded AI Summaries are the next planned AI phase; they are not implemented.
+  Generation will be manual and separate from user notes and fetched metadata, and KeptIt will
+  remain fully useful without an AI provider.
+- Suggested tags remain later work and are not part of the AI Summaries phase.
 - Embeddings stored with PostgreSQL and pgvector
 - Natural-language semantic and hybrid search
 - An “ask my library” experience grounded in a user's Discoveries
@@ -93,7 +96,13 @@ unsupported rather than scraped. KeptIt never downloads platform videos.
 
 ## Development roadmap
 
-Development begins with product and architecture decisions, followed by application scaffolding, authentication, the core Discovery experience, and safe metadata enrichment. AI enhancements follow only after the non-AI MVP is stable. Production hardening, accessibility, monitoring, backups, and deployment complete the portfolio release. See [docs/roadmap.md](docs/roadmap.md) for phased deliverables and completion criteria.
+Development begins with product and architecture decisions, followed by application scaffolding,
+authentication, the core Discovery experience, and safe metadata enrichment. The next planned
+coding phase adds optional manual AI Summaries; semantic search and embeddings remain a separate
+following phase. AI Summaries are not implemented today and no provider is required for local
+startup. Production hardening, accessibility, monitoring, backups, and deployment complete the
+portfolio release. See [docs/roadmap.md](docs/roadmap.md) and the
+[AI Summaries implementation plan](docs/ai-summaries-implementation-plan.md).
 
 ## Privacy principles
 
@@ -185,4 +194,8 @@ Coming soon. The initial production target is Render or another suitable managed
 - [Roadmap](docs/roadmap.md)
 - [Local development](docs/local-development.md)
 - [Spaces implementation plan](docs/spaces-implementation-plan.md)
+- [AI Summaries implementation plan](docs/ai-summaries-implementation-plan.md)
+- [AI Summaries database decisions](docs/ai-summaries-database-decisions.md)
+- [AI Summaries API contract](docs/ai-summaries-api-contract.md)
+- [AI Summaries prompt specification](docs/ai-summaries-prompt-spec.md)
 - [Coding-agent guidance](AGENTS.md)

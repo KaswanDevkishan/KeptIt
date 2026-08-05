@@ -144,15 +144,44 @@ Space filtering and membership controls are implemented. Tag filtering remains p
 - Security tests cover private addresses, malicious redirects, unsafe content types, and oversized responses.
 - No copyrighted video is downloaded or hosted.
 
-## Phase 6 — Memory behaviour and AI-assisted discovery
+## Phase 6 — Optional AI Summaries
+
+**Goal:** Add source-grounded generated understanding without making AI part of core storage or the
+Discovery save path.
+
+**Deliverables (only):**
+
+- AI Summary database migration with one current owner-scoped dependent row per Discovery
+- Small provider abstraction and deterministic fake development provider
+- One optional real-provider adapter
+- Explicit manual generation endpoint; retry and confirmed regeneration behavior
+- Separate responsive AI Summary UI for every lifecycle state
+- Usage and configurable estimated-cost tracking plus quotas/cooldowns/feature flags
+- Backend, frontend, migration, authorization, concurrency, privacy, and prompt-injection tests
+- AI Summary implementation, database, API, prompt, privacy, operations, and rollout documentation
+
+**Completion criteria:**
+
+- AI output never overwrites user-authored content, fetched metadata, operational state, or Space
+  membership, and every existing non-AI workflow passes unchanged.
+- Metadata is treated as bounded untrusted prompt data; notes/save reasons are excluded by default;
+  provider keys remain backend-only; local startup and normal use require no provider.
+- Generation is manual, non-blocking, owner-scoped, idempotent, cost-limited, observable, and
+  durable before real-provider production rollout.
+- No embeddings, semantic search, automatic Tags, Memory Threads, or rediscovery capability is
+  introduced.
+
+See the [AI Summaries implementation plan](ai-summaries-implementation-plan.md).
+
+## Phase 7 — Semantic search and memory intelligence
 
 **Goal:** Add private memory behaviour and grounded intelligence after the non-AI product is stable.
 
 **Deliverables:**
 
-- AI summaries and automatic tag suggestions
 - Carefully scoped revisit history and rediscovery feedback
 - Discovery connections and Memory Threads backed by explainable relational records
+- Optional automatic Tag suggestions only after a separate consent and taxonomy design
 - Versioned embedding pipeline and pgvector storage
 - Semantic search
 - Hybrid keyword and semantic ranking
@@ -166,7 +195,7 @@ Space filtering and membership controls are implemented. Tag filtering remains p
 - Evaluation fixtures demonstrate useful gains over keyword-only search for agreed queries.
 - The product degrades safely when AI services are unavailable and never fabricates saved sources.
 
-## Phase 7 — Capture and portability
+## Phase 8 — Capture and portability
 
 **Goal:** Make KeptIt easier to use wherever links are discovered and keep user data portable.
 
@@ -184,7 +213,7 @@ Space filtering and membership controls are implemented. Tag filtering remains p
 - Export produces a documented, portable format.
 - Imports are previewable, idempotent where practical, and report invalid or duplicate records without losing valid entries.
 
-## Phase 8 — Production and portfolio release
+## Phase 9 — Production and portfolio release
 
 **Goal:** Harden, operate, deploy, and clearly present a production-ready portfolio application.
 
