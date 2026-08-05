@@ -80,6 +80,11 @@ require the existing session cookie, owner scope, and trusted-origin protection 
 Platform detection supports Instagram, YouTube, TikTok, Reddit, X/Twitter, GitHub, and
 `generic_web`.
 
+Spaces are available under `/api/v1/spaces`. They are private, owner-scoped collections: a
+Discovery can belong to multiple Spaces, duplicate names are rejected after Unicode normalization,
+and deleting a Space removes only its memberships. The responsive library sidebar supports Space
+creation, filtering, renaming, deletion, and per-card membership controls.
+
 Metadata enrichment is a separate, best-effort phase. Saving creates a `pending` metadata record;
 the owner can request enrichment without changing the original URL, custom title, note, or save
 reason. Generic public HTML and public GitHub repositories are supported. YouTube uses the official
@@ -176,6 +181,8 @@ Coming soon. The initial production target is Render or another suitable managed
 - [Database decisions](docs/database-decisions.md)
 - [Entity relationships](docs/entity-relationship.md)
 - [MVP schema](docs/mvp-schema.md)
+- [Spaces feature implementation plan](docs/spaces-implementation-plan.md)
 - [Roadmap](docs/roadmap.md)
 - [Local development](docs/local-development.md)
+- [Spaces implementation plan](docs/spaces-implementation-plan.md)
 - [Coding-agent guidance](AGENTS.md)

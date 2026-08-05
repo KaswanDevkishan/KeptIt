@@ -31,6 +31,13 @@ function page(results: unknown[] = []) {
   return json({ results, total: results.length, limit: 20, offset: 0 })
 }
 
+function libraryResponse(results: unknown[] = []) {
+  return (input: RequestInfo | URL) =>
+    Promise.resolve(
+      input.toString().includes('/spaces') ? json({ items: [], next_cursor: null }) : page(results),
+    )
+}
+
 afterEach(() => vi.restoreAllMocks())
 
 describe('Discovery library', () => {
@@ -54,7 +61,7 @@ describe('Discovery library', () => {
         metadata_version: 1,
       },
     }
-    vi.spyOn(globalThis, 'fetch').mockResolvedValue(page([enriched]))
+    vi.spyOn(globalThis, 'fetch').mockImplementation(libraryResponse([enriched]))
     render(<DiscoveryLibrary />)
     expect(await screen.findByRole('heading', { name: 'Fetched source title' })).toBeInTheDocument()
     expect(screen.getByText(enriched.metadata.description)).toBeInTheDocument()
@@ -77,7 +84,7 @@ describe('Discovery library', () => {
     }
     const fetchMock = vi
       .spyOn(globalThis, 'fetch')
-      .mockImplementation(() => Promise.resolve(page([pending, failed])))
+      .mockImplementation(libraryResponse([pending, failed]))
     render(<DiscoveryLibrary />)
     expect(await screen.findByText('Source details pending.')).toBeInTheDocument()
     expect(screen.getByText('Source details unavailable.')).toBeInTheDocument()
@@ -89,7 +96,7 @@ describe('Discovery library', () => {
   })
 
   it('shows a genuine empty state and the accessible save form', async () => {
-    vi.spyOn(globalThis, 'fetch').mockResolvedValue(page())
+    vi.spyOn(globalThis, 'fetch').mockImplementation(libraryResponse())
     render(<DiscoveryLibrary />)
     expect(await screen.findByRole('heading', { name: 'Keep what matters.' })).toBeInTheDocument()
     expect(screen.queryByRole('article')).not.toBeInTheDocument()
@@ -101,7 +108,21 @@ describe('Discovery library', () => {
   })
 
   it('validates URL locally, creates with credentials, and shows duplicate errors', async () => {
-    const fetchMock = vi.spyOn(globalThis, 'fetch').mockResolvedValueOnce(page())
+    let created = false
+    let duplicate = false
+    const fetchMock = vi.spyOn(globalThis, 'fetch').mockImplementation((input, init) => {
+      const path = input.toString()
+      if (path.includes('/spaces')) return Promise.resolve(json({ items: [], next_cursor: null }))
+      if ((init as RequestInit | undefined)?.method === 'POST' && path.endsWith('/discoveries')) {
+        if (duplicate)
+          return Promise.resolve(
+            json({ error: { code: 'duplicate_discovery', message: 'internal' } }, 409),
+          )
+        created = true
+        return Promise.resolve(json(discovery, 201))
+      }
+      return Promise.resolve(page(created ? [discovery] : []))
+    })
     render(<DiscoveryLibrary />)
     await screen.findByRole('heading', { name: 'Keep what matters.' })
     await userEvent.click(screen.getByRole('button', { name: 'Save your first Discovery' }))
@@ -113,7 +134,6 @@ describe('Discovery library', () => {
 
     await userEvent.clear(screen.getByLabelText('URL'))
     await userEvent.type(screen.getByLabelText('URL'), discovery.original_url)
-    fetchMock.mockResolvedValueOnce(json(discovery, 201)).mockResolvedValueOnce(page([discovery]))
     await userEvent.click(
       within(screen.getByRole('dialog')).getByRole('button', { name: 'Save Discovery' }),
     )
@@ -126,9 +146,7 @@ describe('Discovery library', () => {
 
     await userEvent.click(screen.getByRole('button', { name: 'Save Discovery' }))
     await userEvent.type(screen.getByLabelText('URL'), discovery.original_url)
-    fetchMock.mockResolvedValueOnce(
-      json({ error: { code: 'duplicate_discovery', message: 'internal' } }, 409),
-    )
+    duplicate = true
     await userEvent.click(
       within(screen.getByRole('dialog')).getByRole('button', { name: 'Save Discovery' }),
     )
@@ -136,9 +154,7 @@ describe('Discovery library', () => {
   })
 
   it('renders, searches, filters, edits, favourites, and archives', async () => {
-    const fetchMock = vi
-      .spyOn(globalThis, 'fetch')
-      .mockImplementation(() => Promise.resolve(page([discovery])))
+    const fetchMock = vi.spyOn(globalThis, 'fetch').mockImplementation(libraryResponse([discovery]))
     render(<DiscoveryLibrary />)
     expect(await screen.findByText(discovery.personal_note)).toBeInTheDocument()
     await userEvent.type(screen.getByLabelText('Search Discoveries'), 'repository')
@@ -164,15 +180,15 @@ describe('Discovery library', () => {
     )
 
     await userEvent.click(screen.getByRole('button', { name: /Favourite Useful repository/ }))
-    await userEvent.click(screen.getByRole('button', { name: 'Archive' }))
+    await userEvent.click(
+      within(screen.getByRole('article')).getByRole('button', { name: 'Archive' }),
+    )
     expect(fetchMock.mock.calls.some((call) => call[0].toString().endsWith('/archive'))).toBe(true)
   })
 
   it('restores archived Discoveries and confirms permanent deletion', async () => {
     const archived = { ...discovery, archived_at: '2026-08-05T01:00:00Z' }
-    const fetchMock = vi
-      .spyOn(globalThis, 'fetch')
-      .mockImplementation(() => Promise.resolve(page([archived])))
+    const fetchMock = vi.spyOn(globalThis, 'fetch').mockImplementation(libraryResponse([archived]))
     vi.spyOn(window, 'confirm').mockReturnValue(true)
     render(<DiscoveryLibrary />)
     await screen.findByRole('heading', { name: discovery.custom_title })

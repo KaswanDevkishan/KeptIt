@@ -1,5 +1,6 @@
 import uuid
 from datetime import datetime
+from typing import TYPE_CHECKING
 
 from sqlalchemy import (
     Boolean,
@@ -17,6 +18,9 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.base import Base
 from app.models.user import User, utc_now
+
+if TYPE_CHECKING:
+    from app.models.space import Space, SpaceMembership
 
 
 class Discovery(Base):
@@ -84,6 +88,12 @@ class Discovery(Base):
     user: Mapped[User] = relationship(back_populates="discoveries")
     metadata_record: Mapped["MetadataRecord | None"] = relationship(
         back_populates="discovery", cascade="all, delete-orphan", uselist=False
+    )
+    memberships: Mapped[list["SpaceMembership"]] = relationship(
+        back_populates="discovery", cascade="all, delete-orphan", passive_deletes=True
+    )
+    spaces: Mapped[list["Space"]] = relationship(
+        secondary="space_memberships", back_populates="discoveries", viewonly=True
     )
 
 

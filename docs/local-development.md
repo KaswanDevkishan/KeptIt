@@ -135,6 +135,14 @@ Remote thumbnails load directly in the browser with `Referrer-Policy: no-referre
 still learns the browser IP and request. Metadata limits use the `METADATA_*` variables in
 `backend/.env.example`. Never put provider keys in frontend variables.
 
+### Exercise Spaces
+
+Apply revision `20260805_0005`, sign in, and create a Space from the **My Spaces** sidebar. Assign
+one Discovery to multiple Spaces from its **Add or remove Spaces** control, open each Space to
+verify filtering, then rename and delete a Space. Confirm deletion removes the Space but leaves its
+Discoveries in **All Discoveries**. A second account must not be able to read or mutate the first
+account's Space or create a membership using either account's foreign resource UUID.
+
 Run frontend checks from `frontend/`:
 
 ```bash
