@@ -74,6 +74,62 @@ export interface DiscoveryPage {
   offset: number
 }
 
+export type SummaryStatus =
+  | 'unavailable'
+  | 'pending'
+  | 'processing'
+  | 'succeeded'
+  | 'failed'
+  | 'unsupported'
+  | 'insufficient_data'
+  | 'stale'
+export interface AiSummary {
+  status: SummaryStatus
+  summary: string | null
+  key_points: string[]
+  topics: string[]
+  entities: { name: string; type: string }[]
+  language: string | null
+  confidence: number | null
+  insufficiency_reason: string | null
+  generated_at: string | null
+  last_attempted_at: string | null
+  is_regenerating: boolean
+  can_generate: boolean
+  can_retry: boolean
+  can_regenerate: boolean
+  retry_after_seconds: number | null
+  error?: { code: string; message: string } | null
+  last_attempt_error?: { code: string; message: string } | null
+}
+
+function idempotencyKey() {
+  return `keptit-${crypto.randomUUID()}`
+}
+export function getSummary(id: string, signal?: AbortSignal) {
+  return api.get<AiSummary>(`/api/v1/discoveries/${id}/summary`, signal)
+}
+export function generateSummary(id: string) {
+  return api.postWithHeaders<AiSummary>(
+    `/api/v1/discoveries/${id}/summary`,
+    {},
+    { 'Idempotency-Key': idempotencyKey() },
+  )
+}
+export function retrySummary(id: string) {
+  return generateSummary(id)
+}
+export function regenerateSummary(id: string) {
+  return api.postWithHeaders<AiSummary>(
+    `/api/v1/discoveries/${id}/summary/regenerate`,
+    { confirm: true },
+    { 'Idempotency-Key': idempotencyKey() },
+  )
+}
+export function deleteSummary(id: string) {
+  return api.delete(`/api/v1/discoveries/${id}/summary`)
+}
+
 export function createDiscovery(input: DiscoveryInput) {
   return api.post<Discovery>('/api/v1/discoveries', input)
 }

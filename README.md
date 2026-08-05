@@ -25,11 +25,11 @@ KeptIt provides one private, searchable library for original URLs and the contex
 
 Semantic AI search is not part of the first MVP.
 
-## Future AI features
+## Optional AI Summaries
 
-- Optional, source-grounded AI Summaries are the next planned AI phase; they are not implemented.
-  Generation will be manual and separate from user notes and fetched metadata, and KeptIt will
-  remain fully useful without an AI provider.
+- Optional, source-grounded AI Summaries can be generated manually from approved fetched metadata.
+  The offline fake requires no key; the OpenAI adapter requires explicit server-only configuration.
+  Notes, save reasons, custom titles, raw URLs, account data, and Spaces are never sent.
 - Suggested tags remain later work and are not part of the AI Summaries phase.
 - Embeddings stored with PostgreSQL and pgvector
 - Natural-language semantic and hybrid search
@@ -99,7 +99,7 @@ unsupported rather than scraped. KeptIt never downloads platform videos.
 Development begins with product and architecture decisions, followed by application scaffolding,
 authentication, the core Discovery experience, and safe metadata enrichment. The next planned
 coding phase adds optional manual AI Summaries; semantic search and embeddings remain a separate
-following phase. AI Summaries are not implemented today and no provider is required for local
+following phase. AI Summaries are disabled by default and no provider is required for local
 startup. Production hardening, accessibility, monitoring, backups, and deployment complete the
 portfolio release. See [docs/roadmap.md](docs/roadmap.md) and the
 [AI Summaries implementation plan](docs/ai-summaries-implementation-plan.md).

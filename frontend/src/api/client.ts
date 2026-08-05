@@ -6,6 +6,7 @@ interface RequestOptions {
   method?: Method
   body?: unknown
   signal?: AbortSignal
+  headers?: Record<string, string>
 }
 
 interface ErrorEnvelope {
@@ -66,7 +67,10 @@ export async function apiRequest<T>(path: string, options: RequestOptions = {}):
     response = await fetch(`${API_BASE_URL}${path}`, {
       method: options.method ?? 'GET',
       credentials: 'include',
-      headers: options.body === undefined ? undefined : { 'Content-Type': 'application/json' },
+      headers: {
+        ...(options.body === undefined ? {} : { 'Content-Type': 'application/json' }),
+        ...options.headers,
+      },
       body: options.body === undefined ? undefined : JSON.stringify(options.body),
       signal: options.signal,
     })
@@ -87,6 +91,8 @@ export async function apiRequest<T>(path: string, options: RequestOptions = {}):
 export const api = {
   get: <T>(path: string, signal?: AbortSignal) => apiRequest<T>(path, { signal }),
   post: <T>(path: string, body?: unknown) => apiRequest<T>(path, { method: 'POST', body }),
+  postWithHeaders: <T>(path: string, body: unknown, headers: Record<string, string>) =>
+    apiRequest<T>(path, { method: 'POST', body, headers }),
   put: <T>(path: string, body?: unknown) => apiRequest<T>(path, { method: 'PUT', body }),
   patch: <T>(path: string, body: unknown) => apiRequest<T>(path, { method: 'PATCH', body }),
   delete: (path: string) => apiRequest<void>(path, { method: 'DELETE' }),

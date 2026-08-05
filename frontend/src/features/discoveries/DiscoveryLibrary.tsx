@@ -18,6 +18,163 @@ function titleFor(discovery: Discovery) {
   }
 }
 
+function AiSummaryPanel({ discovery }: { discovery: Discovery }) {
+  const [summary, setSummary] = useState<discoveryApi.AiSummary | null>(null)
+  const [error, setError] = useState('')
+  const [busy, setBusy] = useState(false)
+  const refresh = useCallback(async () => {
+    try {
+      const result = await discoveryApi.getSummary(discovery.id)
+      if (
+        ![
+          'unavailable',
+          'pending',
+          'processing',
+          'succeeded',
+          'failed',
+          'unsupported',
+          'insufficient_data',
+          'stale',
+        ].includes(result.status)
+      )
+        return
+      setSummary({
+        ...result,
+        key_points: result.key_points ?? [],
+        topics: result.topics ?? [],
+        entities: result.entities ?? [],
+      })
+      setError('')
+    } catch (caught) {
+      setError(caught instanceof ApiError ? caught.message : 'AI summary is unavailable.')
+    }
+  }, [discovery.id])
+  useEffect(() => {
+    void refresh()
+  }, [refresh])
+  useEffect(() => {
+    if (!summary || !['pending', 'processing'].includes(summary.status) || summary.is_regenerating)
+      return
+    const timer = window.setInterval(() => void refresh(), 1500)
+    return () => window.clearInterval(timer)
+  }, [refresh, summary])
+  async function act(action: () => Promise<unknown>) {
+    setBusy(true)
+    setError('')
+    try {
+      await action()
+      await refresh()
+    } catch (caught) {
+      setError(caught instanceof ApiError ? caught.message : 'AI summary action failed.')
+    } finally {
+      setBusy(false)
+    }
+  }
+  if (!summary && !error)
+    return (
+      <section className="ai-summary" aria-label="AI summary">
+        <p role="status">Loading AI summary…</p>
+      </section>
+    )
+  if (error && !summary) return null
+  if (!summary) return null
+  return (
+    <section className="ai-summary" aria-label="AI-generated summary">
+      <div className="ai-summary__heading">
+        <strong>AI-generated summary</strong>
+        {summary.status === 'stale' && <span>Source metadata changed</span>}
+      </div>
+      {summary.status === 'unavailable' &&
+        (summary.can_generate ? (
+          <button
+            disabled={busy}
+            onClick={() => void act(() => discoveryApi.generateSummary(discovery.id))}
+          >
+            Generate AI summary
+          </button>
+        ) : (
+          <p>AI summary is unavailable.</p>
+        ))}
+      {['pending', 'processing'].includes(summary.status) && (
+        <p role="status">Generating summary…</p>
+      )}
+      {summary.summary && <p>{summary.summary}</p>}
+      {summary.key_points.length > 0 && (
+        <>
+          <h3>Key points</h3>
+          <ul>
+            {summary.key_points.map((point) => (
+              <li key={point}>{point}</li>
+            ))}
+          </ul>
+        </>
+      )}
+      {summary.topics.length > 0 && (
+        <p>
+          <strong>Topics:</strong> {summary.topics.join(', ')}
+        </p>
+      )}
+      {summary.entities.length > 0 && (
+        <p>
+          <strong>Entities:</strong> {summary.entities.map((entity) => entity.name).join(', ')}
+        </p>
+      )}
+      {summary.status === 'insufficient_data' && (
+        <p>
+          {summary.insufficiency_reason ??
+            'There is not enough source metadata to summarize reliably.'}
+        </p>
+      )}
+      {summary.status === 'unsupported' && (
+        <p>This source is not supported by the summary metadata policy.</p>
+      )}
+      {summary.status === 'failed' && (
+        <p role="alert">AI summary generation failed. Your Discovery is unchanged.</p>
+      )}
+      {error && <p role="alert">{error}</p>}
+      <div className="ai-summary__actions">
+        {summary.can_retry && (
+          <button
+            disabled={busy}
+            onClick={() => void act(() => discoveryApi.retrySummary(discovery.id))}
+          >
+            Retry
+          </button>
+        )}
+        {summary.can_regenerate && (
+          <button
+            disabled={busy || summary.is_regenerating}
+            onClick={() => {
+              if (
+                window.confirm(
+                  'Regenerate this AI summary? The current summary stays visible until replacement succeeds.',
+                )
+              )
+                void act(() => discoveryApi.regenerateSummary(discovery.id))
+            }}
+          >
+            Regenerate
+          </button>
+        )}
+        {summary.status !== 'unavailable' && (
+          <button
+            disabled={busy}
+            onClick={() => {
+              if (window.confirm('Delete this AI-generated summary?'))
+                void act(async () => {
+                  await discoveryApi.deleteSummary(discovery.id)
+                  await refresh()
+                })
+            }}
+          >
+            Delete summary
+          </button>
+        )}
+      </div>
+    </section>
+  )
+}
+
 function DiscoveryForm({
   initial = emptyInput,
   submitLabel,
@@ -600,6 +757,7 @@ export function DiscoveryLibrary() {
                   </button>
                 </div>
               )}
+              <AiSummaryPanel discovery={discovery} />
               {discovery.personal_note && <p className="note-preview">{discovery.personal_note}</p>}
               {discovery.save_reason && <p className="save-reason">Why: {discovery.save_reason}</p>}
               {spaces.some((space) => memberships[space.id]?.has(discovery.id)) && (

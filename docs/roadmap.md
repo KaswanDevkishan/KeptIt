@@ -1,5 +1,11 @@
 # KeptIt Development Roadmap
 
+Implementation note (2026-08-05): optional manual AI Summaries are implemented behind
+disabled-by-default flags with a deterministic fake, optional OpenAI adapter, owner-scoped API,
+current-row deletion, derived staleness, quota/cooldown controls, and library-card UI. Production
+enablement remains blocked on the worker and operational/privacy gates in the normative AI plan.
+All later AI features remain postponed.
+
 Each phase should remain deployable and reviewable. A phase is complete only when its criteria are met and applicable automated checks pass.
 
 ## Phase 0 — Product and repository foundation
