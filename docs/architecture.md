@@ -253,8 +253,12 @@ Semantic Search is optional and additive. A versioned document builder creates o
 representation per Discovery from an explicit privacy allowlist. Custom title, approved metadata,
 platform/hostname, and available AI Summary content are included by default; personal notes, save
 reasons, Tags, and Spaces require the explicit private-context setting. Raw URLs and account data
-are excluded. A small replaceable embedding-provider boundary has a deterministic offline fake and
-at most one optional real adapter; provider keys stay backend-only.
+are excluded. A small replaceable embedding-provider boundary has a deterministic offline fake plus
+optional OpenAI and Gemini adapters; provider keys stay backend-only. Gemini uses the official
+`google-genai` SDK, stable `gemini-embedding-001`, and explicitly requests 1,536 dimensions with
+`RETRIEVAL_DOCUMENT` for indexing and `RETRIEVAL_QUERY` for searches. It requires no local model.
+Only matching provider/model/dimension/document-version rows are searched, so changing provider
+makes prior rows stale until the existing re-index action replaces them.
 
 `discovery_embeddings` is a separate one-current-row dependent table in PostgreSQL using pgvector.
 Its provider/model/dimension, document version, input fingerprint, vector, lifecycle, usage/cost,

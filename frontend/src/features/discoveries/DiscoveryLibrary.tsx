@@ -926,13 +926,6 @@ export function DiscoveryLibrary() {
               }
             />
           </label>
-          {searchMode === 'meaning' && (
-            <p className="meaning-disclosure">
-              Find saved items by idea, even when the words differ. Approved titles, source
-              metadata, and AI Summary text may be sent to the configured embedding provider; notes,
-              Tags, and Spaces are excluded.
-            </p>
-          )}
           <label>
             Platform
             <select value={platform} onChange={(e) => setPlatform(e.target.value as Platform | '')}>
@@ -975,6 +968,12 @@ export function DiscoveryLibrary() {
             </button>
           )}
         </div>
+        {searchMode === 'meaning' && (
+          <p className="meaning-disclosure">
+            Meaning search may send approved titles, metadata, and AI Summary text to the configured
+            embedding provider. Notes, Tags, and Spaces are excluded.
+          </p>
+        )}
         <p
           className={searchMode === 'meaning' ? 'meaning-status' : 'visually-hidden'}
           aria-live="polite"

@@ -194,6 +194,30 @@ real email-provider adapter with delivery monitoring. Account deletion remains d
 undefined. Revisit CSRF protection before supporting cross-site deployments or changing the
 cookie's SameSite policy.
 
+## Manual Gemini embedding check
+
+Gemini is optional and uses the official `google-genai` SDK; no local ML model is required. Never
+commit a key. Put `GEMINI_API_KEY` only in `backend/.env`, then set:
+
+```dotenv
+SEMANTIC_SEARCH_ENABLED=true
+EMBEDDING_REAL_PROVIDER_ENABLED=true
+EMBEDDING_PROVIDER=gemini
+EMBEDDING_MODEL=gemini-embedding-001
+EMBEDDING_DIMENSION=1536
+```
+
+Restart the backend, re-index old Discoveries with the existing action, then search an exact title,
+a paraphrase, and a vague remembered description. Verify Keyword mode still works and fake rows
+show stale/not indexed until re-indexed; Gemini queries must never retrieve fake or OpenAI rows.
+The approved Discovery text and each transient semantic query are sent to Google's Gemini API.
+Notes, save reasons, Tags, Spaces, raw URLs, URL paths/query parameters, account/session data, and
+internal IDs remain excluded. Queries and vectors are not logged, persisted, or exposed.
+
+Free-tier eligibility and quotas are account-specific and may change. Production needs reviewed
+quotas, rate limits, budgets, privacy terms, monitoring, and the documented durable worker gate.
+Missing keys do not prevent startup, fake mode, Keyword mode, or other features.
+
 ## Stop local services
 
 Stop the application processes with `Ctrl+C`, then stop PostgreSQL from the repository root:

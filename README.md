@@ -34,10 +34,15 @@ Semantic AI search is not part of the first MVP.
 
 Optional private Semantic Search uses PostgreSQL/pgvector, versioned privacy-reviewed embedding
 documents, manual indexing, bounded owner backfill, and additive semantic/keyword hybrid retrieval.
-The deterministic fake provider needs no key; optional OpenAI embeddings require explicit
-backend-only configuration. Meaning mode never exposes vectors and has no generated answers.
+The deterministic fake provider needs no key; optional OpenAI or Gemini embeddings require
+explicit backend-only configuration. Gemini uses the official `google-genai` SDK with
+`gemini-embedding-001`, 1,536 dimensions, and retrieval-specific document/query task types.
+Meaning mode never exposes vectors and has no generated answers. Gemini receives only the approved
+Discovery document and transient search query; excluded private fields remain excluded.
 Real semantic retrieval requires PostgreSQL with pgvector and uses bounded exact cosine search
-before RRF fusion with keyword candidates. In-process indexing/backfill is portfolio-only. Durable
+before RRF fusion with keyword candidates. Searches never mix provider/model vector spaces, so a
+provider change requires re-indexing. Keyword fallback and normal startup require no provider key.
+In-process indexing/backfill is portfolio-only. Durable
 workers/queues, distributed quotas/rate limits, cursor pagination, private-context preferences,
 HNSW, production monitoring, budgets, and alerts remain postponed.
 

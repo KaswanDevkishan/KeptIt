@@ -1,5 +1,11 @@
 # KeptIt Development Roadmap
 
+Implementation note (2026-08-05): Semantic Search now also supports optional deployable Gemini
+embeddings through the official `google-genai` SDK, `gemini-embedding-001`, 1,536 output dimensions,
+and retrieval document/query task types. Fake remains the automated-test default; provider changes
+require re-indexing and matching provenance prevents vector-space mixing. Existing production gates
+remain unchanged.
+
 Implementation note (2026-08-05): optional manual AI Summaries are implemented behind
 disabled-by-default flags with a deterministic fake, optional OpenAI adapter, owner-scoped API,
 current-row deletion, derived staleness, quota/cooldown controls, and library-card UI. Production

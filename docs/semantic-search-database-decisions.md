@@ -75,6 +75,11 @@ infrastructure remain production work.
 - **Consequences:** Correct similarity with simple behavior; migrations temporarily reduce coverage.
 - **Status:** Final for MVP.
 
+Implementation clarification: the active tuple may be Gemini / `gemini-embedding-001` / 1,536.
+Because the existing column is already `vector(1536)`, this adds no schema change. Switching from
+fake or OpenAI makes those rows stale/ineligible until re-indexed; successful re-indexing replaces
+the one current row.
+
 ## SEM-ADR-008 — Versioned deterministic document
 
 - **Context:** Re-embedding must be reproducible and privacy-auditable.
