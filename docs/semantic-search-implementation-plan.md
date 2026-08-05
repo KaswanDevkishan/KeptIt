@@ -2,7 +2,9 @@
 
 ## Status, assumptions, and product goal
 
-This is the normative design for the next planned phase after Tags. It adds no implementation.
+This is the normative design for the phase after Tags. The portfolio MVP is implemented behind a
+disabled-by-default flag. PostgreSQL with pgvector performs bounded exact cosine retrieval; SQLite
+exists only as an automated-test fallback and is not a production semantic-search engine.
 It assumes existing authentication, owner-scoped Discoveries, metadata, Spaces, Tags, optional AI
 Summaries, keyword/filter behavior, trusted-origin policy, and safe errors remain authoritative.
 
@@ -464,3 +466,16 @@ whether AI Summary inclusion needs separate consent; whether Tag/Space consent s
 notes; exact opt-out deletion/replacement UX; search score exposure beyond API; automatic indexing
 timing after the durable worker; and production database/search latency targets. None authorizes
 chat, RAG, recommendations, sharing, rediscovery, Memory Threads, or other postponed work.
+
+## Portfolio MVP implementation clarification
+
+The portfolio release intentionally uses synchronous in-process per-Discovery indexing and bounded
+inline owner backfill. These are acceptable locally but are not durable across process termination.
+Results are bounded and `next_cursor` remains null; cursor pagination is postponed. Query/index
+limits are local portfolio controls rather than distributed atomic rate limiting.
+
+Postponed production work includes the durable worker and backfill queue, persistent distributed
+quota accounting, distributed IP/user rate limiting, private-note/Tag/Space inclusion preferences,
+HNSW, monitoring, budgets, alerts, and provider privacy approval. Real-provider production remains
+blocked. The fake provider is for deterministic local tests. Exact pgvector `<=>` cosine search is
+the PostgreSQL path; hybrid search retains keyword candidates, RRF, title boost, and fallback.

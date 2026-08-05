@@ -319,3 +319,8 @@ in the evolutionary/future diagram. User Tags remain authored organization; futu
 suggestions are separate inferred data and are absent from both diagrams.
 
 This path avoids splitting a monolithic Discovery later because fetched and inferred data are separate from the beginning conceptually, while avoiding empty future tables operationally.
+## Semantic Search relationship
+
+`User 1 ── * Discovery 1 ── 0..1 DiscoveryEmbedding`. Deleting a Discovery or its owning User
+cascades the dependent embedding. Tags and Spaces remain relational filters and are not embedding
+owners or default document inputs.

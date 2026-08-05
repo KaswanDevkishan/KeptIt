@@ -43,6 +43,28 @@ class Settings(BaseSettings):
     ai_summary_cost_input_rate: int | None = None
     ai_summary_cost_output_rate: int | None = None
     ai_summary_fake_behavior: str = "success"
+    semantic_search_enabled: bool = False
+    embedding_real_provider_enabled: bool = False
+    embedding_provider: str = "fake"
+    embedding_model: str = "text-embedding-3-small"
+    embedding_dimension: int = 1536
+    embedding_document_version: str = "semantic-discovery-v1"
+    embedding_timeout_seconds: float = 10.0
+    embedding_max_input_chars: int = 12_000
+    embedding_daily_index_limit: int = 100
+    semantic_search_daily_query_limit: int = 100
+    semantic_search_max_query_chars: int = 500
+    semantic_search_default_limit: int = 20
+    semantic_search_max_limit: int = 50
+    semantic_search_min_similarity: float = 0.35
+    semantic_search_semantic_candidates: int = 100
+    semantic_search_keyword_candidates: int = 100
+    embedding_max_retries: int = 3
+    embedding_retry_backoff_seconds: int = 30
+    embedding_batch_size: int = 20
+    embedding_cost_rate: int | None = None
+    embedding_fake_behavior: str = "success"
+    embedding_backfill_enabled: bool = True
 
     @field_validator("session_cookie_samesite")
     @classmethod
@@ -113,6 +135,20 @@ class Settings(BaseSettings):
             raise ValueError("AI_SUMMARY_PROMPT_VERSION must be ai-summary-v1")
         if self.environment == "production" and self.ai_summaries_enabled:
             raise ValueError("AI summaries require the production durable worker rollout")
+        if self.embedding_provider not in {"fake", "openai"}:
+            raise ValueError("EMBEDDING_PROVIDER must be fake or openai")
+        if self.embedding_document_version != "semantic-discovery-v1":
+            raise ValueError("EMBEDDING_DOCUMENT_VERSION must be semantic-discovery-v1")
+        if self.embedding_dimension != 1536:
+            raise ValueError("EMBEDDING_DIMENSION must match vector(1536)")
+        if (
+            self.embedding_provider == "openai"
+            and self.semantic_search_enabled
+            and (not self.embedding_real_provider_enabled or not self.openai_api_key)
+        ):
+            raise ValueError("OpenAI embeddings require real-provider enablement and a key")
+        if self.environment == "production" and self.semantic_search_enabled:
+            raise ValueError("Semantic Search requires the production durable worker rollout")
         return self
 
     model_config = SettingsConfigDict(

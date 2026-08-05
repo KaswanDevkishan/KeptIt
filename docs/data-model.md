@@ -300,3 +300,10 @@ not pre-empt a later normalized knowledge or retrieval design.
 8. **Future intelligence:** introduce connections, Memory Threads, insights, and normalized entity/topic records only with evaluation criteria, provenance, deletion, and provider-disclosure policies.
 
 This sequence preserves clean expansion points without making empty future tables part of the MVP.
+## `discovery_embeddings`
+
+One optional current row belongs to one Discovery through a unique cascading foreign key. It stores
+provider/model/dimension/document identity, a private SHA-256 fingerprint, nullable
+`vector(1536)`, lifecycle/failure timestamps, usage and nullable configured cost, bounded retry
+state, and lease/generation-token fields. Ownership is inherited only through Discovery. Neither
+the embedding document nor semantic query text is stored, and no vector is exposed publicly.

@@ -825,3 +825,33 @@ h1 {
   outline: 3px solid #6558d3;
   outline-offset: 2px;
 }
+.search-mode {
+  display: flex;
+  gap: 0.7rem;
+  border: 0;
+  padding: 0;
+}
+.search-mode label {
+  display: flex;
+  gap: 0.3rem;
+  align-items: center;
+}
+.meaning-disclosure {
+  flex-basis: 100%;
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.82rem;
+}
+.meaning-status {
+  margin: 0.5rem 0;
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+.embedding-status {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.6rem;
+  margin: 0.6rem 0;
+  color: var(--muted);
+  font-size: 0.82rem;
+}

@@ -177,6 +177,55 @@ function AiSummaryPanel({ discovery }: { discovery: Discovery }) {
   )
 }
 
+function EmbeddingPanel({ discovery }: { discovery: Discovery }) {
+  const [state, setState] = useState<discoveryApi.EmbeddingStatus | null>(null)
+  const [busy, setBusy] = useState(false)
+  const refresh = useCallback(async () => {
+    try {
+      setState(await discoveryApi.getEmbeddingStatus(discovery.id))
+    } catch {
+      setState(null)
+    }
+  }, [discovery.id])
+  useEffect(() => void refresh(), [refresh])
+  async function run(retry: boolean) {
+    setBusy(true)
+    try {
+      setState(
+        await (retry
+          ? discoveryApi.retryEmbedding(discovery.id)
+          : discoveryApi.indexDiscovery(discovery.id)),
+      )
+    } finally {
+      setBusy(false)
+    }
+  }
+  if (!state) return null
+  const labels: Record<discoveryApi.EmbeddingStatusName, string> = {
+    unavailable: 'Not indexed',
+    pending: 'Pending',
+    processing: 'Processing',
+    succeeded: 'Indexed',
+    stale: 'Stale',
+    failed: 'Failed',
+    unsupported: 'Unsupported',
+  }
+  return (
+    <div className="embedding-status" aria-label="Meaning search indexing">
+      <span>{labels[state.status]}</span>
+      {(state.can_index || state.can_retry) && (
+        <button className="text-button" disabled={busy} onClick={() => void run(state.can_retry)}>
+          {state.status === 'stale'
+            ? 'Re-index stale Discovery'
+            : state.can_retry
+              ? 'Retry'
+              : 'Index for search'}
+        </button>
+      )}
+    </div>
+  )
+}
+
 function DiscoveryForm({
   initial = emptyInput,
   submitLabel,
@@ -439,6 +488,8 @@ export function DiscoveryLibrary() {
   const [showSave, setShowSave] = useState(false)
   const [editing, setEditing] = useState<Discovery | null>(null)
   const [q, setQ] = useState('')
+  const [searchMode, setSearchMode] = useState<'keyword' | 'meaning'>('keyword')
+  const [meaningStatus, setMeaningStatus] = useState('')
   const [platform, setPlatform] = useState<Platform | ''>('')
   const [archived, setArchived] = useState(false)
   const [favourite, setFavourite] = useState(false)
@@ -496,6 +547,38 @@ export function DiscoveryLibrary() {
     async (signal?: AbortSignal) => {
       try {
         setError('')
+        if (searchMode === 'meaning' && q.trim().length >= 2) {
+          setMeaningStatus('Searching by meaning…')
+          const semantic = await discoveryApi.semanticSearch(
+            q,
+            {
+              platform: platform || undefined,
+              archived,
+              favourite: favourite || undefined,
+              space_id: selectedSpaceId ?? undefined,
+              tag_id: selectedTagId ?? undefined,
+            },
+            signal,
+          )
+          setPage({
+            results: semantic.items.map((item) => item.discovery),
+            total: semantic.items.length,
+            limit: 20,
+            offset: 0,
+          })
+          setMeaningStatus(
+            semantic.search.fallback_reason
+              ? `Meaning search used keyword fallback (${semantic.search.fallback_reason.replaceAll('_', ' ')}).`
+              : `${semantic.items.length} meaning-based results. ${semantic.search.indexed_count} of ${semantic.search.eligible_count} eligible Discoveries indexed.`,
+          )
+          return
+        }
+        if (searchMode === 'meaning' && q.trim().length > 0) {
+          setPage({ results: [], total: 0, limit: 20, offset: 0 })
+          setMeaningStatus('Enter at least 2 characters to search by meaning.')
+          return
+        }
+        setMeaningStatus('')
         if (selectedSpaceId && !selectedTagId) {
           const spacePage = await spaceApi.listSpaceDiscoveries(
             selectedSpaceId,
@@ -533,7 +616,7 @@ export function DiscoveryLibrary() {
         setError(caught instanceof ApiError ? caught.message : 'Could not load your library.')
       }
     },
-    [archived, favourite, platform, q, selectedSpaceId, selectedTagId],
+    [archived, favourite, platform, q, searchMode, selectedSpaceId, selectedTagId],
   )
 
   useEffect(() => {
@@ -813,15 +896,43 @@ export function DiscoveryLibrary() {
           </div>
         </div>
         <div className="library-filters" aria-label="Library filters">
+          <fieldset className="search-mode">
+            <legend>Search mode</legend>
+            <label>
+              <input
+                type="radio"
+                checked={searchMode === 'keyword'}
+                onChange={() => setSearchMode('keyword')}
+              />
+              Keyword
+            </label>
+            <label>
+              <input
+                type="radio"
+                checked={searchMode === 'meaning'}
+                onChange={() => setSearchMode('meaning')}
+              />
+              Meaning
+            </label>
+          </fieldset>
           <label className="search-field">
             Search
             <input
               aria-label="Search Discoveries"
               value={q}
               onChange={(e) => setQ(e.target.value)}
-              placeholder="Title, note, or URL"
+              placeholder={
+                searchMode === 'meaning' ? 'Describe what you remember' : 'Title, note, or URL'
+              }
             />
           </label>
+          {searchMode === 'meaning' && (
+            <p className="meaning-disclosure">
+              Find saved items by idea, even when the words differ. Approved titles, source
+              metadata, and AI Summary text may be sent to the configured embedding provider; notes,
+              Tags, and Spaces are excluded.
+            </p>
+          )}
           <label>
             Platform
             <select value={platform} onChange={(e) => setPlatform(e.target.value as Platform | '')}>
@@ -864,6 +975,13 @@ export function DiscoveryLibrary() {
             </button>
           )}
         </div>
+        <p
+          className={searchMode === 'meaning' ? 'meaning-status' : 'visually-hidden'}
+          aria-live="polite"
+          role="status"
+        >
+          {meaningStatus}
+        </p>
         {feedback && (
           <p className="success-banner" role="status">
             {feedback}
@@ -988,6 +1106,7 @@ export function DiscoveryLibrary() {
                   </button>
                 </div>
               )}
+              <EmbeddingPanel discovery={discovery} />
               <AiSummaryPanel discovery={discovery} />
               {discovery.personal_note && <p className="note-preview">{discovery.personal_note}</p>}
               {discovery.save_reason && <p className="save-reason">Why: {discovery.save_reason}</p>}

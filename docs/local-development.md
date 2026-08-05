@@ -26,6 +26,16 @@ uv run uvicorn app.main:app --reload
 ```
 
 The current head includes Tags revision `20260805_0007`. Existing Discoveries begin untagged.
+Semantic Search revision `20260805_0008` requires PostgreSQL with the `vector` extension. Enable
+`SEMANTIC_SEARCH_ENABLED=true` with `EMBEDDING_PROVIDER=fake` for deterministic offline indexing.
+Indexing is manual and creation never waits. The default document excludes notes, save reasons,
+Tags, Spaces, URLs, and account data. Real-provider production remains blocked on a durable worker,
+distributed controls, budgets, monitoring, and provider privacy approval.
+The fake provider is intended for local tests. PostgreSQL uses exact pgvector `<=>` cosine search;
+SQLite semantic ranking is test-only. Keyword mode and hybrid fallback remain available when the
+feature/provider is off. Backfill is bounded and inline for this portfolio build. Cursor pagination,
+private-context inclusion, HNSW, durable queues/workers, distributed quotas/rate limits, and
+production monitoring/budgets/alerts are postponed.
 For local browser verification, create Unicode-equivalent names, assign several Tags, combine one
 Tag with Space/search/platform/favourite/archive filters, and delete a Tag while confirming its
 Discoveries remain. Tag names and searches are private: do not persist them in browser storage,
