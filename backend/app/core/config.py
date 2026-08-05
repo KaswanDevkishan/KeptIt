@@ -27,6 +27,22 @@ class Settings(BaseSettings):
     metadata_user_agent: str = "KeptIt-Metadata/1.0 (+https://keptit.example)"
     youtube_api_key: str | None = None
     spaces_cursor_secret: str = "development-only-spaces-cursor-secret"
+    ai_summaries_enabled: bool = False
+    ai_real_provider_enabled: bool = False
+    ai_summary_provider: str = "fake"
+    openai_api_key: str | None = None
+    ai_summary_model: str = "gpt-4.1-mini"
+    ai_summary_prompt_version: str = "ai-summary-v1"
+    ai_summary_timeout_seconds: float = 15.0
+    ai_summary_max_input_chars: int = 6000
+    ai_summary_max_output_tokens: int = 800
+    ai_summary_daily_limit: int = 20
+    ai_summary_concurrent_limit: int = 2
+    ai_summary_regeneration_cooldown_seconds: int = 60
+    ai_summary_max_retries: int = 2
+    ai_summary_cost_input_rate: int | None = None
+    ai_summary_cost_output_rate: int | None = None
+    ai_summary_fake_behavior: str = "success"
 
     @field_validator("session_cookie_samesite")
     @classmethod
@@ -91,6 +107,12 @@ class Settings(BaseSettings):
             and self.spaces_cursor_secret == "development-only-spaces-cursor-secret"
         ):
             raise ValueError("SPACES_CURSOR_SECRET must be changed in production")
+        if self.ai_summary_provider not in {"fake", "openai"}:
+            raise ValueError("AI_SUMMARY_PROVIDER must be fake or openai")
+        if self.ai_summary_prompt_version != "ai-summary-v1":
+            raise ValueError("AI_SUMMARY_PROMPT_VERSION must be ai-summary-v1")
+        if self.environment == "production" and self.ai_summaries_enabled:
+            raise ValueError("AI summaries require the production durable worker rollout")
         return self
 
     model_config = SettingsConfigDict(
