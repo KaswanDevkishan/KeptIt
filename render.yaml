@@ -6,7 +6,6 @@ services:
     region: singapore
     rootDir: backend
     buildCommand: pip install uv==0.11.32 && uv sync --frozen --no-dev
-    preDeployCommand: uv run alembic upgrade head
     startCommand: uv run uvicorn app.main:app --host 0.0.0.0 --port $PORT --workers 1 --log-level $LOG_LEVEL --no-access-log
     healthCheckPath: /api/v1/readiness
     autoDeployTrigger: checksPass
