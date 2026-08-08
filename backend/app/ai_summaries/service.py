@@ -1,5 +1,6 @@
 import hashlib
 import json
+import logging
 import uuid
 from datetime import UTC, datetime, timedelta
 from decimal import Decimal
@@ -14,6 +15,8 @@ from app.ai_summaries.schemas import PublicError, PublicSummary, SummaryInput
 from app.core.config import Settings
 from app.models.ai_summary import AISummary, AISummaryIdempotencyKey
 from app.models.discovery import Discovery
+
+logger = logging.getLogger(__name__)
 
 SAFE_FAILURES = {
     "timeout": "AI summary generation timed out. Try again later.",
@@ -281,8 +284,8 @@ def process(db: Session, summary_id: uuid.UUID, settings: Settings) -> None:
         row.processing_lease_expires_at = None
         db.commit()
         return
-    provider = get_provider(settings)
     try:
+        provider = get_provider(settings)
         result = provider.generate(
             data,
             model=settings.ai_summary_model,
@@ -324,6 +327,17 @@ def process(db: Session, summary_id: uuid.UUID, settings: Settings) -> None:
         row.failure_code = None
         row.failure_message_safe = None
     except ProviderFailure as exc:
+        logger.error(
+            "AI summary provider failure",
+            extra={
+                "summary_provider": settings.ai_summary_provider,
+                "summary_model": settings.ai_summary_model,
+                "error_classification": exc.classification,
+                "provider_status_code": exc.status_code,
+                "exception_class": exc.exception_class,
+                "safe_reason": exc.code,
+            },
+        )
         row.retry_count += 1
         row.failure_code = exc.code
         row.failure_message_safe = SAFE_FAILURES.get(exc.code, SAFE_FAILURES["failure"])
