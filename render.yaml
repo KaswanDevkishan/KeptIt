@@ -38,7 +38,7 @@ services:
       - key: AI_SUMMARY_PROVIDER
         value: gemini
       - key: AI_SUMMARY_MODEL
-        value: gemini-2.5-flash
+        value: gemini-3.6-flash
       - key: SEMANTIC_SEARCH_ENABLED
         value: "false"
       - key: EMBEDDING_REAL_PROVIDER_ENABLED

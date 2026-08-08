@@ -199,14 +199,14 @@ def test_gemini_structured_output_uses_only_approved_input(
             platform="github",
             canonical_hostname="github.com",
         ),
-        model="gemini-2.5-flash",
+        model="gemini-3.6-flash",
         prompt_version="ai-summary-v1",
         timeout_seconds=1,
         max_output_tokens=321,
     )
     assert result.output.summary == "A source-grounded summary."
     call = sdk_client.models.generate_content.call_args.kwargs
-    assert call["model"] == "gemini-2.5-flash"
+    assert call["model"] == "gemini-3.6-flash"
     assert call["config"].max_output_tokens == 321
     envelope = json.loads(call["contents"])
     assert envelope["source_data"]["title"] == "Approved title"
@@ -227,7 +227,7 @@ def test_gemini_rejects_malformed_output(monkeypatch: pytest.MonkeyPatch) -> Non
     with pytest.raises(ProviderFailure, match="invalid_provider_output"):
         GeminiProvider("test-only-key").generate(
             SummaryInput(platform="github", canonical_hostname="github.com"),
-            model="gemini-2.5-flash",
+            model="gemini-3.6-flash",
             prompt_version="ai-summary-v1",
             timeout_seconds=1,
         )
@@ -252,7 +252,7 @@ def test_gemini_classifies_safe_failures(
     with pytest.raises(ProviderFailure, match=code):
         GeminiProvider("test-only-key").generate(
             SummaryInput(platform="github", canonical_hostname="github.com"),
-            model="gemini-2.5-flash",
+            model="gemini-3.6-flash",
             prompt_version="ai-summary-v1",
             timeout_seconds=1,
         )

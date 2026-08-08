@@ -110,7 +110,7 @@ may use the single-process in-process executor for this private beta only.
 
 To enable Gemini AI Summaries on the backend, set `AI_SUMMARIES_ENABLED=true`,
 `AI_REAL_PROVIDER_ENABLED=true`, `AI_SUMMARY_PROVIDER=gemini`,
-`AI_SUMMARY_MODEL=gemini-2.5-flash`, and a non-empty backend-only `GEMINI_API_KEY`. The Gemini key
+`AI_SUMMARY_MODEL=gemini-3.6-flash`, and a non-empty backend-only `GEMINI_API_KEY`. The Gemini key
 is shared configuration only when both independently gated features use Gemini; configuring
 Gemini embeddings does not enable summaries. OpenAI remains supported instead with
 `AI_SUMMARY_PROVIDER=openai`, `AI_SUMMARY_MODEL=gpt-4.1-mini`, and a backend-only
