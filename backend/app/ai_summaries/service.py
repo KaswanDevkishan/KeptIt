@@ -9,7 +9,7 @@ from fastapi import HTTPException
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
-from app.ai_summaries.providers import FakeProvider, OpenAIProvider, ProviderFailure
+from app.ai_summaries.providers import ProviderFailure, get_provider
 from app.ai_summaries.schemas import PublicError, PublicSummary, SummaryInput
 from app.core.config import Settings
 from app.models.ai_summary import AISummary, AISummaryIdempotencyKey
@@ -58,17 +58,33 @@ def fingerprint(data: SummaryInput) -> bytes:
 
 
 def configured(settings: Settings) -> bool:
-    return settings.ai_summary_provider == "fake" or bool(
-        settings.ai_real_provider_enabled and settings.openai_api_key
+    if settings.ai_summary_provider == "fake":
+        return True
+    key = (
+        settings.gemini_api_key
+        if settings.ai_summary_provider == "gemini"
+        else settings.openai_api_key
     )
+    return bool(settings.ai_real_provider_enabled and key)
 
 
 def public(discovery: Discovery, settings: Settings) -> PublicSummary:
     row = discovery.ai_summary
     if row is None:
+        data = approved_input(discovery, settings.ai_summary_max_input_chars)
+        reason = (
+            "disabled"
+            if not settings.ai_summaries_enabled
+            else "provider_unavailable"
+            if not configured(settings)
+            else "insufficient_data"
+            if not (data.title or data.description)
+            else None
+        )
         return PublicSummary(
             status="unavailable",
-            can_generate=settings.ai_summaries_enabled and configured(settings),
+            availability_reason=reason,
+            can_generate=reason is None,
         )
     current = fingerprint(approved_input(discovery, settings.ai_summary_max_input_chars))
     status = row.status
@@ -105,6 +121,37 @@ def public(discovery: Discovery, settings: Settings) -> PublicSummary:
 
 def _problem(status: int, code: str, message: str) -> HTTPException:
     return HTTPException(status_code=status, detail={"code": code, "message": message})
+
+
+def recover_interrupted(db: Session, discovery: Discovery, settings: Settings) -> None:
+    """Convert expired in-process work into a safe retryable state on the next request."""
+    row = discovery.ai_summary
+    if row is None:
+        return
+    now = datetime.now(UTC)
+    pending_expired = (
+        (row.status == "pending" or row.is_regenerating)
+        and row.last_attempted_at is not None
+        and row.last_attempted_at
+        < now - timedelta(seconds=max(60, int(settings.ai_summary_timeout_seconds * 3)))
+    )
+    processing_expired = (
+        (row.status == "processing" or row.is_regenerating)
+        and row.processing_lease_expires_at is not None
+        and row.processing_lease_expires_at < now
+    )
+    if not (pending_expired or processing_expired):
+        return
+    if not row.is_regenerating:
+        row.status = "failed"
+    row.is_regenerating = False
+    row.failure_code = "unavailable"
+    row.failure_message_safe = SAFE_FAILURES["unavailable"]
+    row.processing_started_at = None
+    row.processing_lease_expires_at = None
+    row.available_at = None
+    row.generation_token = uuid.uuid4()
+    db.commit()
 
 
 def request_generation(
@@ -234,17 +281,14 @@ def process(db: Session, summary_id: uuid.UUID, settings: Settings) -> None:
         row.processing_lease_expires_at = None
         db.commit()
         return
-    provider = (
-        FakeProvider(settings.ai_summary_fake_behavior)
-        if settings.ai_summary_provider == "fake"
-        else OpenAIProvider(settings.openai_api_key or "")
-    )
+    provider = get_provider(settings)
     try:
         result = provider.generate(
             data,
             model=settings.ai_summary_model,
             prompt_version=settings.ai_summary_prompt_version,
             timeout_seconds=settings.ai_summary_timeout_seconds,
+            max_output_tokens=settings.ai_summary_max_output_tokens,
         )
         db.refresh(row)
         if row.generation_token != token:

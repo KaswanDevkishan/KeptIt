@@ -232,9 +232,11 @@ This preserves the database volume. Use `docker compose down --volumes` only whe
 Apply Alembic revision `20260805_0006`, then set `AI_SUMMARIES_ENABLED=true` and
 `AI_SUMMARY_PROVIDER=fake` for deterministic, network-free manual generation. The fake behavior
 setting supports success, insufficient data, failure, timeout, rate limiting, unavailable,
-unsupported, and malformed-output simulations. OpenAI also requires
-`AI_REAL_PROVIDER_ENABLED=true` and a server-only `OPENAI_API_KEY`; no frontend AI configuration is
-needed. All quota, concurrency, cooldown, retry, timeout, token, and cost-rate settings are listed
+unsupported, and malformed-output simulations. OpenAI requires `AI_REAL_PROVIDER_ENABLED=true`
+and a server-only `OPENAI_API_KEY`. Gemini summaries use the existing official `google-genai`
+dependency and require `AI_REAL_PROVIDER_ENABLED=true`, `AI_SUMMARY_PROVIDER=gemini`,
+`AI_SUMMARY_MODEL=gemini-2.5-flash`, and a server-only `GEMINI_API_KEY`; no frontend AI
+configuration is needed. All quota, concurrency, cooldown, retry, timeout, token, and cost-rate settings are listed
 in `backend/.env.example`; blank rates produce a null cost estimate.
 
 Only source metadata title, description, site, publisher, published date, platform, and canonical

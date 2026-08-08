@@ -100,6 +100,7 @@ class PublicError(BaseModel):
 
 class PublicSummary(BaseModel):
     status: str
+    availability_reason: str | None = None
     summary: str | None = None
     key_points: list[str] = Field(default_factory=list)
     topics: list[str] = Field(default_factory=list)

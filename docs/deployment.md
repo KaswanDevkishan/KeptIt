@@ -105,7 +105,16 @@ subdomains are active. The Blueprint sets secure production cookies, disables th
 backend, disables API docs, and leaves AI Summaries and Semantic Search off. Production validation
 rejects insecure cookies, `SameSite` other than `Lax` or `None`, empty/HTTP/localhost frontend origins, reset URLs on another origin,
 the development email outbox, default cursor secrets, incoherent real-provider configuration, and
-AI/semantic enablement before the durable-worker gate is removed deliberately.
+Semantic Search enablement before its durable-worker gate is removed deliberately. AI Summaries
+may use the single-process in-process executor for this private beta only.
+
+To enable Gemini AI Summaries on the backend, set `AI_SUMMARIES_ENABLED=true`,
+`AI_REAL_PROVIDER_ENABLED=true`, `AI_SUMMARY_PROVIDER=gemini`,
+`AI_SUMMARY_MODEL=gemini-2.5-flash`, and a non-empty backend-only `GEMINI_API_KEY`. The Gemini key
+is shared configuration only when both independently gated features use Gemini; configuring
+Gemini embeddings does not enable summaries. OpenAI remains supported instead with
+`AI_SUMMARY_PROVIDER=openai`, `AI_SUMMARY_MODEL=gpt-4.1-mini`, and a backend-only
+`OPENAI_API_KEY` (plus the same two enablement flags).
 
 Create the backend first, verify `GET /api/v1/health` (process liveness) and
 `GET /api/v1/readiness` (database `SELECT 1`, safe `200`/`503` only), then create the static site.
@@ -153,7 +162,9 @@ the deployment no longer needs a portable Blueprint.
 
 Render free web services spin down after inactivity, have cold starts, and are unsuitable for
 serious production traffic; in-process background work can be interrupted and there is no durable
-worker. Neon free usage/storage/compute and connection limits apply, and compute may suspend.
+worker. Expired interrupted work is converted to a safe retryable failure when the summary is next
+read; work is not resumed automatically. Use one backend instance only.
+Neon free usage/storage/compute and connection limits apply, and compute may suspend.
 Gemini quotas are account-specific and change; availability and permanent free access are not
 guaranteed. Provider outages/rate limits fall back to keyword search. Approved embedding documents
 and transient semantic queries are sent to Google when Gemini is enabled.

@@ -89,9 +89,10 @@ provider is configured, or generation fails.
 
 A small typed provider boundary accepts only bounded approved metadata and returns structured
 candidate output plus provider/model/prompt provenance, safe classified errors, and usage where
-available. The first release uses explicit manual generation; a durable database-backed worker
-claims pending rows outside page/save latency before real-provider production use. Local startup
-requires neither an AI key nor a live provider.
+available. Fake, OpenAI, and Gemini adapters preserve the same boundary. The first release uses
+explicit manual generation. The private-beta single-instance deployment may use the documented
+in-process executor with expired-work recovery; public production still requires a durable
+database-backed worker. Local startup requires neither an AI key nor a live provider.
 
 The lifecycle is `unavailable` (no row), `pending`, `processing`, then `succeeded`, `failed`,
 `unsupported`, or `insufficient_data`; a successful result is presented as `stale` when its approved

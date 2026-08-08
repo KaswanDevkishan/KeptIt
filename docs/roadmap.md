@@ -7,9 +7,10 @@ require re-indexing and matching provenance prevents vector-space mixing. Existi
 remain unchanged.
 
 Implementation note (2026-08-05): optional manual AI Summaries are implemented behind
-disabled-by-default flags with a deterministic fake, optional OpenAI adapter, owner-scoped API,
-current-row deletion, derived staleness, quota/cooldown controls, and library-card UI. Production
-enablement remains blocked on the worker and operational/privacy gates in the normative AI plan.
+disabled-by-default flags with deterministic fake plus optional OpenAI and Gemini adapters,
+owner-scoped API, current-row deletion, derived staleness, quota/cooldown controls, and library-card
+UI. The single-instance private beta accepts best-effort in-process execution; public production
+remains blocked on the worker and operational/privacy gates in the normative AI plan.
 All later AI features remain postponed.
 
 Each phase should remain deployable and reviewable. A phase is complete only when its criteria are met and applicable automated checks pass.

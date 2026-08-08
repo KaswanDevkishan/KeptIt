@@ -46,6 +46,7 @@ DELETE has no body. It requires the normal UI confirmation but no special confir
 ```json
 {
   "status": "succeeded",
+  "availability_reason": null,
   "summary": "A concise source-grounded description.",
   "key_points": ["One supported point."],
   "topics": ["subject phrase"],
@@ -76,6 +77,8 @@ Public status is one of `unavailable`, `pending`, `processing`, `succeeded`, `fa
 - `failed` includes optional `error: {code, message, request_id}` using an allowlisted code, never a provider message.
 - `unsupported` means platform/policy cannot supply approved metadata, not provider misconfiguration.
 - `unavailable` means no request/current row; `can_generate` also reflects feature/configuration and sufficient preliminary input.
+- For `unavailable`, `availability_reason` is the safe value `disabled`, `provider_unavailable`,
+  `insufficient_data`, or null. It never identifies a vendor, key, or secret.
 - Timestamps are RFC 3339 UTC. Confidence is null unless validated output exists.
 
 Pending example:

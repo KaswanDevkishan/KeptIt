@@ -117,10 +117,10 @@ These decisions govern the upcoming AI Summaries implementation. “Final” is 
 ## AIS-ADR-015 — Database-backed work before production
 
 - **Context:** Provider latency exceeds normal API latency, processes restart, and there is no Redis or production worker.
-- **Decision:** Local development may execute the fake provider inline or in a short in-process task. A portfolio MVP may use an in-process task only with explicit loss-on-restart limitations. Production requires durable database-backed claiming/lease polling before enabling real-provider generation. Reuse the `ai_summaries` lifecycle row as the small work record initially; do not add Redis/Celery for the first release.
+- **Decision:** Local development may execute the fake provider inline or in a short in-process task. A single-instance private-beta portfolio deployment may use an in-process task with explicit interruption limitations and request-time expired-work recovery. Public or multi-instance production requires durable database-backed claiming/lease polling before enabling real-provider generation. Reuse the `ai_summaries` lifecycle row as the small work record initially; do not add Redis/Celery for the first release.
 - **Alternatives:** Synchronous provider request; ephemeral task as production architecture; Redis/Celery now; a separate jobs table immediately.
 - **Consequences:** No new infrastructure dependency and durable recovery with PostgreSQL, but polling/leases require careful concurrency tests. A general queue can replace it at scale.
-- **Status:** Final production gate; queue technology is revisitable.
+- **Status:** Private-beta exception accepted; the public-production gate and queue technology remain revisitable.
 
 ## AIS-ADR-016 — Durable hashed idempotency keys
 

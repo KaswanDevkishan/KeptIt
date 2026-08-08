@@ -19,7 +19,10 @@ def get_summary(
     discovery_id: uuid.UUID, db: DbSession, user: CurrentUser, response: Response
 ) -> PublicSummary:
     response.headers["Cache-Control"] = "no-store"
-    return service.public(get_owned(db, user.id, discovery_id), get_settings())
+    settings = get_settings()
+    discovery = get_owned(db, user.id, discovery_id)
+    service.recover_interrupted(db, discovery, settings)
+    return service.public(discovery, settings)
 
 
 @router.post("/{discovery_id}/summary", response_model=PublicSummary, status_code=202)
@@ -35,6 +38,7 @@ def generate_summary(
 ) -> PublicSummary:
     settings = get_settings()
     discovery = get_owned(db, user.id, discovery_id)
+    service.recover_interrupted(db, discovery, settings)
     row, code = service.request_generation(
         db, discovery, user.id, settings, key=idempotency_key, regenerate=False
     )
@@ -59,6 +63,7 @@ def regenerate_summary(
 ) -> PublicSummary:
     settings = get_settings()
     discovery = get_owned(db, user.id, discovery_id)
+    service.recover_interrupted(db, discovery, settings)
     row, code = service.request_generation(
         db, discovery, user.id, settings, key=idempotency_key, regenerate=True
     )
