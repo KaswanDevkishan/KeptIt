@@ -27,9 +27,19 @@ class ProviderResult:
 
 
 class ProviderFailure(Exception):
-    def __init__(self, code: str) -> None:
+    def __init__(
+        self,
+        code: str,
+        *,
+        classification: str | None = None,
+        status_code: int | None = None,
+        exception_class: str | None = None,
+    ) -> None:
         super().__init__(code)
         self.code = code
+        self.classification = classification or code
+        self.status_code = status_code
+        self.exception_class = exception_class or type(self).__name__
 
 
 class SummaryProvider(Protocol):
@@ -182,11 +192,38 @@ class GeminiProvider:
                     response_mime_type="application/json",
                     response_schema=SummaryOutput,
                     max_output_tokens=max_output_tokens,
+                    # Thinking tokens share max_output_tokens. Keep this simple,
+                    # bounded structured-output task from consuming the response
+                    # budget before emitting JSON.
+                    thinking_config=genai_types.ThinkingConfig(thinking_level="minimal"),
                     http_options=genai_types.HttpOptions(timeout=int(timeout_seconds * 1000)),
                 ),
             )
             if not response.text:
-                raise ProviderFailure("invalid_provider_output")
+                finish_reason = _gemini_finish_reason(response)
+                if finish_reason == "MAX_TOKENS":
+                    raise ProviderFailure(
+                        "invalid_provider_output",
+                        classification="output_token_limit",
+                        exception_class=type(response).__name__,
+                    )
+                if finish_reason in {
+                    "SAFETY",
+                    "RECITATION",
+                    "BLOCKLIST",
+                    "PROHIBITED_CONTENT",
+                    "SPII",
+                }:
+                    raise ProviderFailure(
+                        "invalid_provider_output",
+                        classification="safety_refusal",
+                        exception_class=type(response).__name__,
+                    )
+                raise ProviderFailure(
+                    "invalid_provider_output",
+                    classification="empty_response",
+                    exception_class=type(response).__name__,
+                )
             try:
                 output = SummaryOutput.model_validate_json(response.text)
             except (ValueError, TypeError):
@@ -200,7 +237,42 @@ class GeminiProvider:
         except ProviderFailure:
             raise
         except Exception as exc:
-            raise ProviderFailure(_classify_gemini_error(exc)) from None
+            status = getattr(exc, "code", None)
+            raise ProviderFailure(
+                _classify_gemini_error(exc),
+                classification=_classify_gemini_exception(exc),
+                status_code=status if isinstance(status, int) else None,
+                exception_class=type(exc).__name__,
+            ) from None
+
+
+def _gemini_finish_reason(response: object) -> str | None:
+    candidates = getattr(response, "candidates", None)
+    if not candidates:
+        return None
+    reason = getattr(candidates[0], "finish_reason", None)
+    value = getattr(reason, "value", reason)
+    return value if isinstance(value, str) else None
+
+
+def _classify_gemini_exception(exc: Exception) -> str:
+    status = getattr(exc, "code", None)
+    name = type(exc).__name__.lower()
+    if isinstance(exc, (httpx.TimeoutException, TimeoutError)) or "timeout" in name:
+        return "timeout"
+    if status == 429:
+        return "rate_limited"
+    if status in {401, 403}:
+        return "authentication"
+    if status == 400:
+        return "invalid_request"
+    if status in {500, 502, 503, 504}:
+        return "provider_unavailable"
+    if isinstance(exc, httpx.NetworkError):
+        return "network_failure"
+    if isinstance(exc, genai_errors.APIError):
+        return "provider_api_error"
+    return "unexpected_provider_error"
 
 
 def _classify_gemini_error(exc: Exception) -> str:

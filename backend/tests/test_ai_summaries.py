@@ -208,6 +208,10 @@ def test_gemini_structured_output_uses_only_approved_input(
     call = sdk_client.models.generate_content.call_args.kwargs
     assert call["model"] == "gemini-3.6-flash"
     assert call["config"].max_output_tokens == 321
+    assert call["config"].response_mime_type == "application/json"
+    assert call["config"].response_schema is not None
+    assert call["config"].thinking_config.thinking_level.value == "MINIMAL"
+    assert call["config"].http_options.timeout == 1000
     envelope = json.loads(call["contents"])
     assert envelope["source_data"]["title"] == "Approved title"
     serialized = call["contents"]
@@ -231,6 +235,36 @@ def test_gemini_rejects_malformed_output(monkeypatch: pytest.MonkeyPatch) -> Non
             prompt_version="ai-summary-v1",
             timeout_seconds=1,
         )
+
+
+def test_gemini_classifies_thinking_exhausting_output_budget(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    sdk_client = MagicMock()
+    sdk_client.models.generate_content.return_value = SimpleNamespace(
+        text=None,
+        candidates=[SimpleNamespace(finish_reason="MAX_TOKENS")],
+        usage_metadata=SimpleNamespace(
+            prompt_token_count=250,
+            candidates_token_count=None,
+            thoughts_token_count=800,
+        ),
+    )
+    monkeypatch.setattr(
+        "app.ai_summaries.providers.genai.Client", MagicMock(return_value=sdk_client)
+    )
+
+    with pytest.raises(ProviderFailure) as raised:
+        GeminiProvider("test-only-key").generate(
+            SummaryInput(platform="github", canonical_hostname="github.com"),
+            model="gemini-3.6-flash",
+            prompt_version="ai-summary-v1",
+            timeout_seconds=1,
+            max_output_tokens=800,
+        )
+
+    assert raised.value.code == "invalid_provider_output"
+    assert raised.value.classification == "output_token_limit"
 
 
 @pytest.mark.parametrize(
@@ -290,3 +324,48 @@ def test_stale_ignores_user_fields_and_delete_is_owner_scoped(
     )
     assert client.get(f"/api/v1/discoveries/{discovery_id}/summary").status_code == 404
     assert client.delete(f"/api/v1/discoveries/{discovery_id}/summary").status_code == 404
+
+
+def test_failed_summary_can_retry_and_failure_log_is_sanitized(
+    client: TestClient,
+    db_session: Session,
+    caplog: pytest.LogCaptureFixture,
+) -> None:
+    enable_fake()
+    settings = get_settings()
+    settings.ai_summary_fake_behavior = "timeout"
+    discovery_id = register_and_create(client, "retry-summary@example.com")
+    discovery = db_session.scalar(select(Discovery))
+    assert discovery is not None and discovery.metadata_record is not None
+    discovery.metadata_record.title = "Sensitive source title"
+    discovery.metadata_record.description = "Sensitive source description"
+    discovery.metadata_record.status = "succeeded"
+    db_session.commit()
+
+    with caplog.at_level("ERROR", logger="app.ai_summaries.service"):
+        first = client.post(
+            f"/api/v1/discoveries/{discovery_id}/summary",
+            json={},
+            headers={"Idempotency-Key": "failed-generation-001"},
+        )
+    assert first.status_code == 202
+    failed = client.get(f"/api/v1/discoveries/{discovery_id}/summary").json()
+    assert failed["status"] == "failed"
+    assert failed["can_retry"]
+    record = next(
+        record for record in caplog.records if record.message == "AI summary provider failure"
+    )
+    assert record.__dict__["summary_provider"] == "fake"
+    assert record.__dict__["error_classification"] == "timeout"
+    assert record.__dict__["safe_reason"] == "timeout"
+    assert "Sensitive source" not in caplog.text
+    assert "retry-summary@example.com" not in caplog.text
+
+    settings.ai_summary_fake_behavior = "success"
+    retried = client.post(
+        f"/api/v1/discoveries/{discovery_id}/summary",
+        json={},
+        headers={"Idempotency-Key": "retry-generation-002"},
+    )
+    assert retried.status_code == 202
+    assert client.get(f"/api/v1/discoveries/{discovery_id}/summary").json()["status"] == "succeeded"
