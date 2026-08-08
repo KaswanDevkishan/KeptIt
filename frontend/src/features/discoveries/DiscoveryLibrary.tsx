@@ -80,6 +80,7 @@ function AiSummaryPanel({ discovery }: { discovery: Discovery }) {
     )
   if (error && !summary) return null
   if (!summary) return null
+  if (summary.status === 'unavailable' && summary.availability_reason === 'disabled') return null
   return (
     <section className="ai-summary" aria-label="AI-generated summary">
       <div className="ai-summary__heading">
@@ -95,7 +96,13 @@ function AiSummaryPanel({ discovery }: { discovery: Discovery }) {
             Generate AI summary
           </button>
         ) : (
-          <p>AI summary is unavailable.</p>
+          <p>
+            {summary.availability_reason === 'provider_unavailable'
+              ? 'AI summary generation is temporarily unavailable.'
+              : summary.availability_reason === 'insufficient_data'
+                ? 'Add source metadata before generating an AI summary.'
+                : 'AI summary generation is unavailable.'}
+          </p>
         ))}
       {['pending', 'processing'].includes(summary.status) && (
         <p role="status">Generating summary…</p>

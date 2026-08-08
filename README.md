@@ -28,7 +28,8 @@ Semantic AI search is not part of the first MVP.
 ## Optional AI Summaries
 
 - Optional, source-grounded AI Summaries can be generated manually from approved fetched metadata.
-  The offline fake requires no key; the OpenAI adapter requires explicit server-only configuration.
+  The offline fake requires no key; OpenAI and Gemini adapters require explicit server-only
+  configuration. Gemini summary generation is independently gated from Gemini embeddings.
   Notes, save reasons, custom titles, raw URLs, account data, and Spaces are never sent.
 - Suggested tags remain later work and are not part of the AI Summaries phase.
 

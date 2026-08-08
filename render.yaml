@@ -33,6 +33,12 @@ services:
         generateValue: true
       - key: AI_SUMMARIES_ENABLED
         value: "false"
+      - key: AI_REAL_PROVIDER_ENABLED
+        value: "false"
+      - key: AI_SUMMARY_PROVIDER
+        value: gemini
+      - key: AI_SUMMARY_MODEL
+        value: gemini-2.5-flash
       - key: SEMANTIC_SEARCH_ENABLED
         value: "false"
       - key: EMBEDDING_REAL_PROVIDER_ENABLED

@@ -118,6 +118,7 @@ export type SummaryStatus =
   | 'stale'
 export interface AiSummary {
   status: SummaryStatus
+  availability_reason?: 'disabled' | 'provider_unavailable' | 'insufficient_data' | null
   summary: string | null
   key_points: string[]
   topics: string[]

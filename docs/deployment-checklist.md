@@ -34,7 +34,9 @@
 
 ## AI and search
 
-- [ ] AI Summaries and Semantic Search remain off unless every documented production gate is met.
+- [ ] AI Summaries use the explicitly accepted private-beta in-process-executor limitation, or remain off.
+- [ ] Semantic Search remains off unless every documented production gate is met.
+- [ ] Summary enablement, real-provider enablement, provider/model, and backend-only provider key are coherent.
 - [ ] Gemini key is backend-only; model/dimension are `gemini-embedding-001`/1536.
 - [ ] Existing Discoveries are re-indexed after provider/model changes.
 - [ ] Realistic exact/paraphrase/vague/multilingual relevance and all filters are tested.

@@ -41,6 +41,109 @@ function libraryResponse(results: unknown[] = []) {
 afterEach(() => vi.restoreAllMocks())
 
 describe('Discovery library', () => {
+  function summaryFetch(summary: Record<string, unknown>) {
+    return vi.spyOn(globalThis, 'fetch').mockImplementation((input, init) => {
+      const path = input.toString()
+      if (path.endsWith(`/${discovery.id}/summary`)) {
+        if ((init as RequestInit | undefined)?.method === 'POST')
+          return Promise.resolve(json({ ...summary, status: 'pending' }, 202))
+        return Promise.resolve(json(summary))
+      }
+      if (path.includes('/spaces')) return Promise.resolve(json({ items: [], next_cursor: null }))
+      return Promise.resolve(page([discovery]))
+    })
+  }
+
+  const unavailableSummary = {
+    status: 'unavailable',
+    summary: null,
+    key_points: [],
+    topics: [],
+    entities: [],
+    language: null,
+    confidence: null,
+    insufficiency_reason: null,
+    generated_at: null,
+    last_attempted_at: null,
+    is_regenerating: false,
+    can_generate: false,
+    can_retry: false,
+    can_regenerate: false,
+    retry_after_seconds: null,
+  }
+
+  it('hides the dead summary panel when summaries are globally disabled', async () => {
+    summaryFetch({ ...unavailableSummary, availability_reason: 'disabled' })
+    render(<DiscoveryLibrary />)
+    await screen.findByRole('heading', { name: discovery.custom_title })
+    await waitFor(() => expect(screen.queryByLabelText('AI-generated summary')).toBeNull())
+  })
+
+  it('shows safe provider and insufficient-data summary states', async () => {
+    summaryFetch({ ...unavailableSummary, availability_reason: 'provider_unavailable' })
+    const { unmount } = render(<DiscoveryLibrary />)
+    expect(
+      await screen.findByText('AI summary generation is temporarily unavailable.'),
+    ).toBeInTheDocument()
+    expect(screen.queryByText(/Gemini|OpenAI|API key/i)).not.toBeInTheDocument()
+    unmount()
+
+    summaryFetch({ ...unavailableSummary, availability_reason: 'insufficient_data' })
+    render(<DiscoveryLibrary />)
+    expect(
+      await screen.findByText('Add source metadata before generating an AI summary.'),
+    ).toBeInTheDocument()
+  })
+
+  it('exposes the generation action', async () => {
+    const fetchMock = summaryFetch({
+      ...unavailableSummary,
+      availability_reason: null,
+      can_generate: true,
+    })
+    render(<DiscoveryLibrary />)
+    await userEvent.click(await screen.findByRole('button', { name: 'Generate AI summary' }))
+    expect(
+      fetchMock.mock.calls.some(
+        (call) =>
+          call[0].toString().endsWith(`/${discovery.id}/summary`) &&
+          (call[1] as RequestInit).method === 'POST',
+      ),
+    ).toBe(true)
+  })
+
+  it('renders successful summaries and exposes retry after safe failure', async () => {
+    summaryFetch({
+      ...unavailableSummary,
+      status: 'succeeded',
+      summary: 'A validated source-grounded summary.',
+      key_points: ['A supported point.'],
+      topics: ['testing'],
+      can_regenerate: true,
+    })
+    const { unmount } = render(<DiscoveryLibrary />)
+    expect(await screen.findByText('A validated source-grounded summary.')).toBeInTheDocument()
+    expect(screen.getByText('A supported point.')).toBeInTheDocument()
+    unmount()
+
+    vi.restoreAllMocks()
+    const fetchMock = summaryFetch({
+      ...unavailableSummary,
+      status: 'failed',
+      can_retry: true,
+      error: { code: 'timeout', message: 'AI summary generation timed out. Try again later.' },
+    })
+    render(<DiscoveryLibrary />)
+    await userEvent.click(await screen.findByRole('button', { name: 'Retry' }))
+    expect(
+      fetchMock.mock.calls.some(
+        (call) =>
+          call[0].toString().endsWith(`/${discovery.id}/summary`) &&
+          (call[1] as RequestInit).method === 'POST',
+      ),
+    ).toBe(true)
+  })
+
   it('shows fetched metadata, title fallback, thumbnail safety, and pending state', async () => {
     const enriched = {
       ...discovery,

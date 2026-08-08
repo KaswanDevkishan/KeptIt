@@ -186,18 +186,24 @@ class Settings(BaseSettings):
             and self.spaces_cursor_secret == "development-only-spaces-cursor-secret"
         ):
             raise ValueError("SPACES_CURSOR_SECRET must be changed in production")
-        if self.ai_summary_provider not in {"fake", "openai"}:
-            raise ValueError("AI_SUMMARY_PROVIDER must be fake or openai")
+        if self.ai_summary_provider not in {"fake", "openai", "gemini"}:
+            raise ValueError("AI_SUMMARY_PROVIDER must be fake, openai, or gemini")
         if self.ai_summary_prompt_version != "ai-summary-v1":
             raise ValueError("AI_SUMMARY_PROMPT_VERSION must be ai-summary-v1")
-        if self.environment == "production" and self.ai_summaries_enabled:
-            raise ValueError("AI summaries require the production durable worker rollout")
         if (
             self.ai_summaries_enabled
             and self.ai_summary_provider == "openai"
             and (not self.ai_real_provider_enabled or not self.openai_api_key)
         ):
             raise ValueError("OpenAI AI summaries require real-provider enablement and a key")
+        if (
+            self.ai_summaries_enabled
+            and self.ai_summary_provider == "gemini"
+            and (not self.ai_real_provider_enabled or not self.gemini_api_key)
+        ):
+            raise ValueError("Gemini AI summaries require real-provider enablement and a key")
+        if self.ai_summary_provider == "gemini" and self.ai_summary_model != "gemini-2.5-flash":
+            raise ValueError("Gemini AI summaries require AI_SUMMARY_MODEL=gemini-2.5-flash")
         if self.embedding_provider not in {"fake", "openai", "gemini"}:
             raise ValueError("EMBEDDING_PROVIDER must be fake, openai, or gemini")
         if self.embedding_document_version != "semantic-discovery-v1":
