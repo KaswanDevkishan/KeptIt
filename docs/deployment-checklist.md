@@ -13,6 +13,8 @@
 
 - [ ] Runtime and direct migration URLs are set in Render.
 - [ ] `ENVIRONMENT=production`, `SESSION_COOKIE_SECURE=true`, and `SESSION_COOKIE_SAMESITE=none`.
+- [ ] For mobile-safe deployment, final custom hosts are sibling subdomains and
+      `SESSION_COOKIE_SAMESITE=lax`; `none` is only the generated-domain compatibility mode.
 - [ ] CORS is a JSON HTTPS allowlist containing only the final frontend origin.
 - [ ] Password reset URL uses that origin; `EMAIL_BACKEND=disabled` until real delivery exists.
 - [ ] Cursor secret is generated; docs are absent; one worker binds `$PORT` without reload.
@@ -25,6 +27,8 @@
 - [ ] Security/cache headers are present and remote thumbnails are reviewed.
 - [ ] Register, login, protected refresh, save, metadata, Tags, Spaces, delete, and logout pass.
 - [ ] Cookie is host-only, HttpOnly, Secure, SameSite=None, path `/`; token is absent from JavaScript.
+- [ ] On same-site custom subdomains, cookie is host-only, HttpOnly, Secure, SameSite=Lax, path `/`;
+      login and `/app` refresh pass on mobile Safari and mobile Chrome with tracking protection.
 - [ ] Allowed CORS credentials work; wildcard/untrusted/missing mutation origins fail.
 - [ ] Logs contain no secrets or private content.
 

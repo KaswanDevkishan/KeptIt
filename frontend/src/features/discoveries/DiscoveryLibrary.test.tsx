@@ -107,6 +107,17 @@ describe('Discovery library', () => {
     expect(screen.getByLabelText(/Personal note/)).toBeInTheDocument()
   })
 
+  it('shows a fetch failure without a misleading empty library', async () => {
+    vi.spyOn(globalThis, 'fetch').mockRejectedValue(new TypeError('offline'))
+    render(<DiscoveryLibrary />)
+
+    expect(await screen.findByRole('alert')).toHaveTextContent('Unable to reach KeptIt')
+    expect(screen.queryByText('Keep what matters.')).not.toBeInTheDocument()
+    expect(
+      screen.queryByRole('button', { name: 'Save your first Discovery' }),
+    ).not.toBeInTheDocument()
+  })
+
   it('validates URL locally, creates with credentials, and shows duplicate errors', async () => {
     let created = false
     let duplicate = false

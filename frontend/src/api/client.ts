@@ -13,6 +13,8 @@ interface ErrorEnvelope {
   error?: { code?: unknown; message?: unknown }
 }
 
+export const UNAUTHORIZED_EVENT = 'keptit:unauthorized'
+
 export class ApiError extends Error {
   constructor(
     public readonly code: string,
@@ -84,7 +86,10 @@ export async function apiRequest<T>(path: string, options: RequestOptions = {}):
   }
 
   const data = await parseJson(response)
-  if (!response.ok) throw safeError(response, data)
+  if (!response.ok) {
+    if (response.status === 401) window.dispatchEvent(new Event(UNAUTHORIZED_EVENT))
+    throw safeError(response, data)
+  }
   return data as T
 }
 

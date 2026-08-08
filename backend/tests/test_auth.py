@@ -156,3 +156,47 @@ def test_cookie_security_configuration_is_applied(client: TestClient) -> None:
     assert f"Max-Age={settings.session_duration_seconds}" in cookie
     assert "SameSite=lax" in cookie
     assert "Path=/" in cookie
+    assert "Domain=" not in cookie
+
+
+def test_production_cookie_has_secure_cross_site_attributes(client: TestClient) -> None:
+    settings = get_settings()
+    original_secure = settings.session_cookie_secure
+    original_samesite = settings.session_cookie_samesite
+    try:
+        settings.session_cookie_secure = True
+        settings.session_cookie_samesite = "none"
+        cookie = register(client).headers["set-cookie"]
+    finally:
+        settings.session_cookie_secure = original_secure
+        settings.session_cookie_samesite = original_samesite
+
+    assert "HttpOnly" in cookie
+    assert "Secure" in cookie
+    assert "SameSite=none" in cookie
+    assert "Path=/" in cookie
+    assert f"Max-Age={settings.session_duration_seconds}" in cookie
+    assert "Domain=" not in cookie
+
+
+def test_cors_allows_configured_credentials_and_rejects_other_origins(client: TestClient) -> None:
+    allowed = client.options(
+        "/api/v1/users/me",
+        headers={
+            "Origin": "http://localhost:5173",
+            "Access-Control-Request-Method": "GET",
+        },
+    )
+    rejected = client.options(
+        "/api/v1/users/me",
+        headers={
+            "Origin": "https://evil.example",
+            "Access-Control-Request-Method": "GET",
+        },
+    )
+
+    assert allowed.status_code == 200
+    assert allowed.headers["access-control-allow-origin"] == "http://localhost:5173"
+    assert allowed.headers["access-control-allow-credentials"] == "true"
+    assert rejected.status_code == 400
+    assert "access-control-allow-origin" not in rejected.headers

@@ -154,8 +154,8 @@ class Settings(BaseSettings):
     def require_secure_production_cookie(self) -> "Settings":
         if self.environment == "production" and not self.session_cookie_secure:
             raise ValueError("SESSION_COOKIE_SECURE must be true in production")
-        if self.environment == "production" and self.session_cookie_samesite != "none":
-            raise ValueError("Render cross-site production requires SESSION_COOKIE_SAMESITE=none")
+        if self.environment == "production" and self.session_cookie_samesite not in {"lax", "none"}:
+            raise ValueError("production SESSION_COOKIE_SAMESITE must be lax or none")
         if self.session_cookie_samesite == "none" and not self.session_cookie_secure:
             raise ValueError("SameSite=None requires SESSION_COOKIE_SECURE=true")
         if self.environment == "production" and self.email_backend == "development_file":

@@ -177,6 +177,10 @@ authentication migration to be applied. `frontend/.env`'s `VITE_API_BASE_URL` mu
 backend origin. The backend's CORS and trusted-origin configuration must allow the frontend origin.
 Sessions use a browser-managed HTTP-only cookie; frontend code never reads or stores its value.
 
+Mobile-safe production requires same-site HTTPS frontend/API hosts (for example,
+`app.example.com` and `api.example.com`). Separate generated Render domains rely on third-party
+cookies and are not reliable on mobile browsers that block them; see the deployment guide.
+
 Run the complete baseline checks:
 
 ```bash

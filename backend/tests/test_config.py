@@ -31,7 +31,7 @@ def test_local_defaults_remain_valid() -> None:
     "override",
     [
         {"session_cookie_secure": False},
-        {"session_cookie_samesite": "lax"},
+        {"session_cookie_samesite": "strict"},
         {"cors_origins": ["*"]},
         {"cors_origins": ["http://frontend.example.com"]},
         {"cors_origins": ["https://localhost:5173"]},
@@ -47,6 +47,17 @@ def test_disabled_optional_ai_needs_no_key() -> None:
     settings = production_settings()
     assert not settings.ai_summaries_enabled
     assert not settings.semantic_search_enabled
+
+
+def test_same_site_production_cookie_configuration_is_valid() -> None:
+    settings = production_settings(
+        cors_origins=["https://app.keptit.example"],
+        frontend_password_reset_url="https://app.keptit.example/reset-password",
+        session_cookie_samesite="lax",
+    )
+
+    assert settings.session_cookie_secure
+    assert settings.session_cookie_samesite == "lax"
 
 
 def test_enabled_gemini_requires_real_provider_and_key() -> None:
