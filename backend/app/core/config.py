@@ -202,8 +202,8 @@ class Settings(BaseSettings):
             and (not self.ai_real_provider_enabled or not self.gemini_api_key)
         ):
             raise ValueError("Gemini AI summaries require real-provider enablement and a key")
-        if self.ai_summary_provider == "gemini" and self.ai_summary_model != "gemini-2.5-flash":
-            raise ValueError("Gemini AI summaries require AI_SUMMARY_MODEL=gemini-2.5-flash")
+        if self.ai_summary_provider == "gemini" and self.ai_summary_model != "gemini-3.6-flash":
+            raise ValueError("Gemini AI summaries require AI_SUMMARY_MODEL=gemini-3.6-flash")
         if self.embedding_provider not in {"fake", "openai", "gemini"}:
             raise ValueError("EMBEDDING_PROVIDER must be fake, openai, or gemini")
         if self.embedding_document_version != "semantic-discovery-v1":

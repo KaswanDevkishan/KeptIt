@@ -77,7 +77,7 @@ def test_private_beta_production_allows_configured_gemini_summaries() -> None:
         ai_summaries_enabled=True,
         ai_real_provider_enabled=True,
         ai_summary_provider="gemini",
-        ai_summary_model="gemini-2.5-flash",
+        ai_summary_model="gemini-3.6-flash",
         gemini_api_key="test-only-key",
     )
     assert settings.ai_summaries_enabled
@@ -90,7 +90,7 @@ def test_gemini_summaries_require_real_provider_and_key(key: str | None) -> None
             ai_summaries_enabled=True,
             ai_real_provider_enabled=key is not None,
             ai_summary_provider="gemini",
-            ai_summary_model="gemini-2.5-flash",
+            ai_summary_model="gemini-3.6-flash",
             gemini_api_key=key,
         )
 
