@@ -15,6 +15,32 @@ session cookie with `SameSite=None; Secure`, explicit HTTPS CORS origins, creden
 requests, and mandatory trusted `Origin` checks for mutations. Do not set a cookie domain; the
 host-only API cookie uses path `/` and is never readable by JavaScript.
 
+This generated-domain configuration is compatible with desktop browsers that permit third-party
+cookies, but it is **not reliable mobile authentication**. The generated hosts are different sites,
+and mobile privacy controls can refuse to store or send the API cookie. `SameSite=None` permits
+cross-site cookie use; it cannot override a browser's third-party-cookie blocking policy.
+
+The production-safe topology is two HTTPS custom subdomains under one registrable domain:
+
+```text
+https://app.example.com  -> Render static site
+https://api.example.com  -> Render FastAPI service
+```
+
+These remain separate origins (so credentialed CORS and trusted `Origin` checks still apply) but
+are the same site. Configure `CORS_ORIGINS=["https://app.example.com"]`,
+`FRONTEND_PASSWORD_RESET_URL=https://app.example.com/reset-password`,
+`VITE_API_BASE_URL=https://api.example.com`, `SESSION_COOKIE_SECURE=true`, and
+`SESSION_COOKIE_SAMESITE=lax`. Keep the cookie host-only without `Domain`, plus `Path=/`,
+`HttpOnly`, and the bounded `Max-Age`. Render manages TLS for both custom domains. Disable the
+generated Render subdomains after cutover if appropriate, then retest CORS, trusted origins, login,
+refresh, and logout on the final hosts.
+
+A same-origin `/api` reverse proxy is also sound, but Render static-site rewrites do not document a
+general API reverse proxy. It requires an additional proxy/service topology, so it is not the
+simpler supported option here. No custom-domain-only application code is required: the existing API
+base URL, CORS allowlist, trusted-origin check, and cookie settings support sibling subdomains.
+
 This is a private-beta topology, not a claim of production-grade operations. Password-reset email,
 durable AI workers, distributed rate limiting, monitoring, tested backups, account deletion, and
 legal/privacy review remain blockers.
@@ -73,9 +99,11 @@ Populate every `sync: false` variable in Render's secret/config UI:
 - `VITE_API_BASE_URL` on the static site: public HTTPS API origin, without `/api/v1` or a trailing
   slash.
 
-The Blueprint sets production cookies, disables the local email backend, disables API docs, and
-leaves AI Summaries and Semantic Search off. Production validation rejects insecure cookies,
-`SameSite` other than `None`, empty/HTTP/localhost frontend origins, reset URLs on another origin,
+The Blueprint retains `SameSite=None` so the generated Render URLs remain usable in desktop
+browsers that allow third-party cookies. Change it to `lax` in Render when same-site custom
+subdomains are active. The Blueprint sets secure production cookies, disables the local email
+backend, disables API docs, and leaves AI Summaries and Semantic Search off. Production validation
+rejects insecure cookies, `SameSite` other than `Lax` or `None`, empty/HTTP/localhost frontend origins, reset URLs on another origin,
 the development email outbox, default cursor secrets, incoherent real-provider configuration, and
 AI/semantic enablement before the durable-worker gate is removed deliberately.
 

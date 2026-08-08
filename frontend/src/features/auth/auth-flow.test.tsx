@@ -128,6 +128,28 @@ describe('frontend authentication', () => {
     await waitFor(() => expect(router.state.location.pathname).toBe('/login'))
   })
 
+  it('keeps protected content unresolved when the current-user check fails', async () => {
+    vi.spyOn(globalThis, 'fetch').mockRejectedValue(new TypeError('offline'))
+    const router = renderAt('/app')
+
+    expect(await screen.findByRole('alert')).toHaveTextContent('Unable to verify your session')
+    expect(router.state.location.pathname).toBe('/app')
+    expect(screen.queryByRole('heading', { name: 'Your Discoveries' })).not.toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Try again' })).toBeInTheDocument()
+  })
+
+  it('redirects when a protected data request returns 401', async () => {
+    vi.spyOn(globalThis, 'fetch').mockImplementation((input) =>
+      Promise.resolve(
+        input.toString().includes('/users/me') ? jsonResponse(publicUser) : unauthenticated(),
+      ),
+    )
+    const router = renderAt('/app')
+
+    await waitFor(() => expect(router.state.location.pathname).toBe('/login'))
+    expect(screen.queryByText('Keep what matters.')).not.toBeInTheDocument()
+  })
+
   it('shows an authenticated account separately from the protected-page heading', async () => {
     const userWithLongEmail = {
       ...publicUser,

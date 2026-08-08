@@ -613,6 +613,7 @@ export function DiscoveryLibrary() {
         }
       } catch (caught) {
         if (caught instanceof DOMException && caught.name === 'AbortError') return
+        setPage(null)
         setError(caught instanceof ApiError ? caught.message : 'Could not load your library.')
       }
     },

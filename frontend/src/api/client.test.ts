@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
 
-import { api } from './client'
+import { api, UNAUTHORIZED_EVENT } from './client'
 
 afterEach(() => vi.restoreAllMocks())
 
@@ -35,5 +35,20 @@ describe('api client', () => {
     await expect(api.get('/two')).rejects.toMatchObject({
       message: 'Something went wrong. Please try again.',
     })
+  })
+
+  it('announces a 401 so authenticated UI state can be cleared', async () => {
+    const unauthorized = vi.fn()
+    window.addEventListener(UNAUTHORIZED_EVENT, unauthorized)
+    vi.spyOn(globalThis, 'fetch').mockResolvedValue(
+      new Response(JSON.stringify({ error: { code: 'unauthenticated' } }), {
+        status: 401,
+        headers: { 'Content-Type': 'application/json' },
+      }),
+    )
+
+    await expect(api.get('/protected')).rejects.toMatchObject({ status: 401 })
+    expect(unauthorized).toHaveBeenCalledOnce()
+    window.removeEventListener(UNAUTHORIZED_EVENT, unauthorized)
   })
 })
